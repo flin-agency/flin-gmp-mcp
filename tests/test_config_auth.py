@@ -218,3 +218,18 @@ def test_oauth_timeout_is_actionable_and_callback_codes_are_not_logged(
         auth._run_installed_app_flow(settings)
     assert "private-code" not in caplog.text
     assert not settings.token_path.exists()
+
+
+def test_reject_symlinked_token_on_read(settings, tmp_path):
+    write_token(settings)
+    alias = resolve_token_path(settings=settings, account="work")
+    alias.symlink_to(settings.token_path)
+    with pytest.raises(auth.AuthenticationError, match="symlinked"):
+        auth.get_credentials(settings=settings, account="work")
+
+
+def test_malformed_scope_list_has_actionable_status(settings):
+    write_token(settings, {**token_info(settings), "scopes": [{"bad": "scope"}]})
+    assert auth.describe_auth_state(settings=settings)["status"] == "oauth_required"
+    with pytest.raises(auth.AuthenticationRequiredError):
+        auth.get_credentials(settings=settings)

@@ -8,6 +8,9 @@ uv run ruff check .
 uv run ruff format --check .
 uv run pytest
 uv build
+uv run twine check dist/*.whl dist/*.tar.gz
+uv run python scripts/build_mcpb.py
+uv run python scripts/check_mcpb.py dist/mcpb/*.mcpb
 ```
 
 The automated suite exercises configuration, isolated named accounts, OAuth
@@ -18,7 +21,8 @@ A real stdio subprocess is initialized and queried without Google credentials.
 Request contracts are checked against a reduced snapshot of Google's public
 Discovery documents retrieved on 2026-10-30.
 
-CI runs on Python 3.10, 3.12 and 3.14. Unit tests do not prove that a particular
+CI runs on Python 3.10, 3.12 and 3.14, plus a macOS bundle startup job.
+The desktop builder uses Python and the official MCPB schema, avoiding Node build dependencies. Unit tests do not prove that a particular
 Google account has product access or that its API quotas are available.
 
 ## Live smoke test (requires your own Google authorization)

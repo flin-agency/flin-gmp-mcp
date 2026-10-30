@@ -21,6 +21,8 @@ class AuthenticationRequiredError(AuthenticationError):
 
 
 def _load_token_info(token_path: Path) -> dict[str, Any]:
+    if token_path.is_symlink():
+        raise AuthenticationError("Refusing to read credentials through a symlinked token path.")
     try:
         info = json.loads(token_path.read_text(encoding="utf-8"))
         if not isinstance(info, dict):
@@ -251,5 +253,9 @@ def _validate_token_info(info: dict[str, Any], settings: Settings) -> None:
     if info.get("client_id") != settings.client_id:
         raise AuthenticationRequiredError("Token belongs to a different OAuth client.")
     scopes = info.get("scopes", [])
-    if not isinstance(scopes, list) or not set(settings.scopes).issubset(scopes):
+    if (
+        not isinstance(scopes, list)
+        or not all(isinstance(scope, str) for scope in scopes)
+        or not set(settings.scopes).issubset(scopes)
+    ):
         raise AuthenticationRequiredError("Sign in again to grant the configured scopes.")

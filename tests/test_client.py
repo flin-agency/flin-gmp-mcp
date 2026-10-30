@@ -146,3 +146,8 @@ def test_generic_errors_never_expose_exception_text():
         AuthenticationRequiredError("secret"),
     ]:
         assert "secret" not in client.error_message(error)
+
+
+def test_oversized_response_has_actionable_error():
+    assert client.error_message(client.ResponseTooLargeError()).startswith("response_too_large:")
+    assert "page_size" in client.error_message(client.ResponseTooLargeError())

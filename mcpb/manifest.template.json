@@ -1,0 +1,195 @@
+{
+  "manifest_version": "0.4",
+  "author": {
+    "name": "flin GmbH",
+    "email": "flin@flin.agency",
+    "url": "https://flin.agency"
+  },
+  "icon": "icon.png",
+  "server": {
+    "type": "uv",
+    "entry_point": "server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${__dirname}",
+        "--locked",
+        "--no-dev",
+        "--python",
+        "3.12",
+        "${__dirname}/server.py"
+      ],
+      "env": {
+        "GOOGLE_CLIENT_ID": "${user_config.google_client_id}",
+        "GOOGLE_CLIENT_SECRET": "${user_config.google_client_secret}",
+        "GOOGLE_GMP_SERVICES": "${user_config.services}"
+      }
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "darwin"
+    ],
+    "runtimes": {
+      "python": ">=3.12 <3.13"
+    }
+  },
+  "license": "MIT",
+  "name": "flin-gmp-mcp",
+  "display_name": "flin Google Marketing Platform",
+  "description": "Read Google Marketing Platform organizations, DV360 campaigns, CM360 reports and SA360 performance.",
+  "long_description": "Connect Google Marketing Platform, Display & Video 360, Campaign Manager 360 and Search Ads 360 to Claude Desktop. Requires your own Google Desktop OAuth client and product access. Run authenticate for browser sign-in. Credentials stay on your computer. Google scopes may allow writes; this server only exposes read operations. GA4 reporting is provided by flin-ga4-mcp.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flin-agency/flin-gmp-mcp.git"
+  },
+  "homepage": "https://github.com/flin-agency/flin-gmp-mcp",
+  "documentation": "https://github.com/flin-agency/flin-gmp-mcp/blob/main/docs/desktop-extension.md",
+  "support": "https://github.com/flin-agency/flin-gmp-mcp/issues",
+  "privacy_policies": [
+    "https://github.com/flin-agency/flin-gmp-mcp/blob/main/PRIVACY.md",
+    "https://policies.google.com/privacy"
+  ],
+  "keywords": [
+    "google",
+    "marketing",
+    "dv360",
+    "cm360",
+    "sa360",
+    "reporting"
+  ],
+  "user_config": {
+    "google_client_id": {
+      "type": "string",
+      "title": "Google OAuth Client ID",
+      "description": "Desktop app OAuth client ID from your Google Cloud project.",
+      "required": true
+    },
+    "google_client_secret": {
+      "type": "string",
+      "title": "Google OAuth Client Secret",
+      "description": "Client secret of the same Desktop app OAuth client.",
+      "required": true,
+      "sensitive": true
+    },
+    "services": {
+      "type": "string",
+      "title": "Enabled products",
+      "description": "Comma-separated selection of admin,dv360,cm360,sa360. Enable the corresponding Google APIs.",
+      "required": true,
+      "default": "admin,dv360,cm360,sa360"
+    }
+  },
+  "tools": [
+    {
+      "name": "health_check",
+      "description": "Check local configuration and token status. No Google request or browser launch."
+    },
+    {
+      "name": "authenticate",
+      "description": "Sign in via the local browser and store credentials privately; never returns tokens."
+    },
+    {
+      "name": "list_organizations",
+      "description": "List accessible GMP organizations (one page, max 1000); not Google Cloud organizations."
+    },
+    {
+      "name": "get_organization",
+      "description": "Get a GMP organization by ID or organizations/{id} from list_organizations."
+    },
+    {
+      "name": "list_analytics_account_links",
+      "description": "List Analytics accounts linked to a GMP organization; no GA4 performance data."
+    },
+    {
+      "name": "list_dv360_partners",
+      "description": "Discover DV360 partners (max 200 per page). Optional native DV360 filter."
+    },
+    {
+      "name": "list_dv360_advertisers",
+      "description": "List advertisers for a discovered partner ID (required by DV360 v4; max 200)."
+    },
+    {
+      "name": "get_dv360_advertiser",
+      "description": "Read one DV360 advertiser's settings."
+    },
+    {
+      "name": "list_dv360_campaigns",
+      "description": "List DV360 campaigns settings (max 200). These are not performance metrics."
+    },
+    {
+      "name": "list_dv360_insertion_orders",
+      "description": "List DV360 insertion orders settings (max 200). These are not performance metrics."
+    },
+    {
+      "name": "list_dv360_line_items",
+      "description": "List DV360 line items settings (max 200). These are not performance metrics."
+    },
+    {
+      "name": "list_dv360_creatives",
+      "description": "List DV360 creatives settings (max 200). These are not performance metrics."
+    },
+    {
+      "name": "list_dv360_report_queries",
+      "description": "List existing DV360 report definitions via Bid Manager v2 (max 100). No report creation."
+    },
+    {
+      "name": "list_dv360_reports",
+      "description": "List existing runs of a DV360 report query, including available report metadata/URLs."
+    },
+    {
+      "name": "get_dv360_report",
+      "description": "Get an existing DV360 report's status and metadata, including its URL when available."
+    },
+    {
+      "name": "list_cm360_profiles",
+      "description": "Discover accessible CM360 user profiles. Choose profileId for subsequent CM360 tools."
+    },
+    {
+      "name": "list_cm360_advertisers",
+      "description": "List CM360 advertisers for a user profile; optional native name/ID search with * wildcards."
+    },
+    {
+      "name": "list_cm360_campaigns",
+      "description": "List CM360 campaigns. Omit archived for both active and archived campaigns."
+    },
+    {
+      "name": "list_cm360_reports",
+      "description": "List saved CM360 report definitions visible to this profile. Does not execute reports."
+    },
+    {
+      "name": "list_cm360_report_files",
+      "description": "List existing CM360 report files and their status; no new report is generated."
+    },
+    {
+      "name": "get_cm360_report_file",
+      "description": "Get existing CM360 report file metadata and download URLs; does not download CSV content."
+    },
+    {
+      "name": "list_sa360_customers",
+      "description": "List directly accessible SA360 customer resource names. Use get_sa360_customer_clients"
+    },
+    {
+      "name": "query_sa360",
+      "description": "Run a read-only Search Ads 360 SELECT query and return one page (max 10000)."
+    },
+    {
+      "name": "get_sa360_customer_clients",
+      "description": "Discover client accounts beneath an SA360 manager, including hierarchy levels."
+    },
+    {
+      "name": "get_sa360_campaign_performance",
+      "description": "Campaign impressions, clicks, cost_micros, conversions and conversion value."
+    },
+    {
+      "name": "search_sa360_fields",
+      "description": "Discover SA360 query fields and compatibility using a metadata SELECT without FROM."
+    },
+    {
+      "name": "list_sa360_custom_columns",
+      "description": "List custom columns available to an SA360 customer."
+    }
+  ]
+}

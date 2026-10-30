@@ -25,7 +25,7 @@ BASE_URLS = {
 READ_PATHS = {
     "admin": r"organizations(?:/[A-Za-z0-9_-]+(?:/analyticsAccountLinks)?)?",
     "dv360": r"(?:partners|advertisers)(?:/[0-9]+)?|advertisers/[0-9]+/(?:campaigns|insertionOrders|lineItems|creatives)(?:/[0-9]+)?",
-    "cm360": r"userprofiles(?:/[0-9]+/(?:advertisers|campaigns|reports)(?:/[0-9]+)?(?:/files(?:/[0-9]+)?)?)?",
+    "cm360": r"userprofiles|userprofiles/[0-9]+/(?:advertisers|campaigns|reports)|userprofiles/[0-9]+/reports/[0-9]+/files(?:/[0-9]+)?",
     "sa360": r"customers:listAccessibleCustomers|customers/[0-9]+/customColumns",
     "dbm": r"queries(?:/[0-9]+(?:/reports(?:/[0-9]+)?)?)?",
 }
@@ -37,6 +37,10 @@ class APIError(RuntimeError):
     def __init__(self, status: int):
         self.status = status
         super().__init__(f"Google API request failed ({status}).")
+
+
+class ResponseTooLargeError(ValueError):
+    """A response exceeded the maximum size the client can safely return."""
 
 
 def numeric_id(value: str) -> str:
@@ -108,7 +112,7 @@ def request(
     }
     before_token = credentials.token
     try:
-        with AuthorizedSession(credentials) as session:
+        with AuthorizedSession(credentials, refresh_timeout=30) as session:
             with session.request(
                 method,
                 BASE_URLS[service] + path,
@@ -126,7 +130,7 @@ def request(
                 for chunk in response.iter_content(chunk_size=65536):
                     length += len(chunk)
                     if length > MAX_RESPONSE_BYTES:
-                        raise ValueError("Response too large. Use a smaller page size or query.")
+                        raise ResponseTooLargeError("Response too large.")
                     chunks.append(chunk)
                 try:
                     data = json.loads(b"".join(chunks))
@@ -168,6 +172,8 @@ def error_message(exc: Exception) -> str:
         return "request_timeout: Retry, or complete browser sign-in before the timeout."
     if isinstance(exc, (requests.RequestException, OSError)):
         return "connection_error: Check network access and token storage permissions."
+    if isinstance(exc, ResponseTooLargeError):
+        return "response_too_large: Reduce page_size or select fewer query fields, then retry."
     if isinstance(exc, ValueError):
         return "invalid_arguments: Check IDs, page sizes, dates and SELECT query syntax."
     return "internal_error: Restart the MCP server and retry."

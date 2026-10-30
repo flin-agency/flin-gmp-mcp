@@ -14,21 +14,24 @@ jobs:
           python-version: '3.12'
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked --extra dev
-      - name: Check tag matches package version
-        run: |
-          uv run python - <<'PY'
-          import os
-          from importlib.metadata import version
-          assert os.environ['GITHUB_REF_NAME'] == 'v' + version('flin-gmp-mcp')
-          PY
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
       - run: uv build
+      - run: uv run twine check dist/*.whl dist/*.tar.gz
+      - name: Build desktop package and check release version
+        run: uv run python scripts/build_mcpb.py --tag "$GITHUB_REF_NAME"
+      - run: uv run python scripts/check_mcpb.py dist/mcpb/*.mcpb
       - uses: actions/upload-artifact@v6
         with:
-          name: dist
-          path: dist/*
+          name: python-dist
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+      - uses: actions/upload-artifact@v6
+        with:
+          name: desktop-bundle
+          path: dist/mcpb/*
   publish-pypi:
     needs: build
     runs-on: ubuntu-latest
@@ -40,6 +43,24 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: dist
+          name: python-dist
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
+  github-release:
+    needs: [build, publish-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          name: desktop-bundle
+          path: desktop-bundle
+      - name: Publish downloadable macOS extension
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" desktop-bundle/* \
+            --verify-tag --title "flin GMP MCP $GITHUB_REF_NAME" \
+            --notes-file docs/release-notes.md

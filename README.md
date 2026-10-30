@@ -80,9 +80,25 @@ Data tools never launch a browser; they return `oauth_required` when sign-in is
 needed. Access tokens refresh automatically. Use `authenticate(force=true)` to
 replace a stale login or switch the selected account. No secrets are returned.
 
-The package is prepared for PyPI publishing. **It has not been published by this
-implementation.** After a release is published, the source command can be replaced
-with `uvx flin-gmp-mcp@latest`.
+## Install from PyPI
+
+```bash
+uvx flin-gmp-mcp@0.1.0
+```
+
+In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.0"]`
+and the same Google environment variables shown above.
+
+## macOS desktop installation
+
+Download `flin-gmp-mcp-0.1.0.mcpb` from the
+[v0.1.0 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.0)
+and import it into Claude Desktop. The package includes the server and locked
+dependency definitions; the first launch needs internet access. Enter your own
+Google OAuth credentials in the extension settings.
+
+See [macOS instructions](docs/desktop-extension.md), [privacy](PRIVACY.md) and
+[support](SUPPORT.md). The bundle is unsigned and accompanied by a SHA-256 checksum.
 
 ## Configuration
 
