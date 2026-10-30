@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.26.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flin-gmp-mcp"
+version = "0.1.0"
+description = "Read-only MCP server for Google Marketing Platform, DV360, CM360 and SA360."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "flin GmbH", email = "flin@flin.agency" }]
+keywords = ["mcp", "google-marketing-platform", "dv360", "cm360", "sa360"]
+dependencies = [
+  "mcp>=1.6.0,<2",
+  "google-auth>=2.40.0,<3",
+  "google-auth-oauthlib>=1.5.0,<2",
+  "requests>=2.32.3,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "pytest-asyncio>=0.24,<2", "ruff>=0.11,<1", "build>=1.2.2"]
+
+[project.scripts]
+flin-gmp-mcp = "flin_gmp_mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/flin-agency/flin-gmp-mcp"
+Repository = "https://github.com/flin-agency/flin-gmp-mcp"
+Issues = "https://github.com/flin-agency/flin-gmp-mcp/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/flin_gmp_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP"]

@@ -1,0 +1,291 @@
+{
+  "retrieved": "2026-10-30",
+  "source": "Google public $discovery/rest documents; endpoint and parameter names only",
+  "services": {
+    "admin": {
+      "version": "v1alpha",
+      "revision": "20261029",
+      "methods": [
+        {
+          "id": "marketingplatformadmin.organizations.list",
+          "method": "GET",
+          "url": "https://marketingplatformadmin.googleapis.com/v1alpha/organizations",
+          "query_parameters": [
+            "pageToken",
+            "pageSize"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "marketingplatformadmin.organizations.get",
+          "method": "GET",
+          "url": "https://marketingplatformadmin.googleapis.com/v1alpha/{+name}",
+          "query_parameters": [],
+          "body_parameters": []
+        },
+        {
+          "id": "marketingplatformadmin.organizations.analyticsAccountLinks.list",
+          "method": "GET",
+          "url": "https://marketingplatformadmin.googleapis.com/v1alpha/{+parent}/analyticsAccountLinks",
+          "query_parameters": [
+            "pageSize",
+            "pageToken"
+          ],
+          "body_parameters": []
+        }
+      ]
+    },
+    "dv360": {
+      "version": "v4",
+      "revision": "20261029",
+      "methods": [
+        {
+          "id": "displayvideo.partners.list",
+          "method": "GET",
+          "url": "https://displayvideo.googleapis.com/v4/partners",
+          "query_parameters": [
+            "pageSize",
+            "orderBy",
+            "pageToken",
+            "filter"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "displayvideo.advertisers.list",
+          "method": "GET",
+          "url": "https://displayvideo.googleapis.com/v4/advertisers",
+          "query_parameters": [
+            "partnerId",
+            "pageSize",
+            "orderBy",
+            "filter",
+            "pageToken"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "displayvideo.advertisers.get",
+          "method": "GET",
+          "url": "https://displayvideo.googleapis.com/v4/advertisers/{+advertiserId}",
+          "query_parameters": [],
+          "body_parameters": []
+        },
+        {
+          "id": "displayvideo.advertisers.creatives.list",
+          "method": "GET",
+          "url": "https://displayvideo.googleapis.com/v4/advertisers/{+advertiserId}/creatives",
+          "query_parameters": [
+            "filter",
+            "pageSize",
+            "pageToken",
+            "orderBy"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "displayvideo.advertisers.insertionOrders.list",
+          "method": "GET",
+          "url": "https://displayvideo.googleapis.com/v4/advertisers/{+advertiserId}/insertionOrders",
+          "query_parameters": [
+            "pageToken",
+            "orderBy",
+            "filter",
+            "pageSize"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "displayvideo.advertisers.lineItems.list",
+          "method": "GET",
+          "url": "https://displayvideo.googleapis.com/v4/advertisers/{+advertiserId}/lineItems",
+          "query_parameters": [
+            "pageToken",
+            "orderBy",
+            "filter",
+            "pageSize"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "displayvideo.advertisers.campaigns.list",
+          "method": "GET",
+          "url": "https://displayvideo.googleapis.com/v4/advertisers/{+advertiserId}/campaigns",
+          "query_parameters": [
+            "filter",
+            "orderBy",
+            "pageSize",
+            "pageToken"
+          ],
+          "body_parameters": []
+        }
+      ]
+    },
+    "cm360": {
+      "version": "v5",
+      "revision": "20261023",
+      "methods": [
+        {
+          "id": "dfareporting.campaigns.list",
+          "method": "GET",
+          "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles/{+profileId}/campaigns",
+          "query_parameters": [
+            "atLeastOneOptimizationActivity",
+            "overriddenEventTagId",
+            "searchString",
+            "ids",
+            "pageToken",
+            "maxResults",
+            "excludedIds",
+            "advertiserGroupIds",
+            "advertiserIds",
+            "subaccountId",
+            "archived",
+            "sortField",
+            "sortOrder"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "dfareporting.advertisers.list",
+          "method": "GET",
+          "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles/{+profileId}/advertisers",
+          "query_parameters": [
+            "pageToken",
+            "advertiserGroupIds",
+            "sortField",
+            "sortOrder",
+            "searchString",
+            "floodlightConfigurationIds",
+            "includeAdvertisersWithoutGroupsOnly",
+            "onlyParent",
+            "status",
+            "ids",
+            "subaccountId",
+            "maxResults"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "dfareporting.userProfiles.list",
+          "method": "GET",
+          "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles",
+          "query_parameters": [],
+          "body_parameters": []
+        },
+        {
+          "id": "dfareporting.reports.list",
+          "method": "GET",
+          "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles/{profileId}/reports",
+          "query_parameters": [
+            "pageToken",
+            "sortOrder",
+            "sortField",
+            "maxResults",
+            "scope"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "dfareporting.reports.files.list",
+          "method": "GET",
+          "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles/{profileId}/reports/{reportId}/files",
+          "query_parameters": [
+            "maxResults",
+            "pageToken",
+            "sortOrder",
+            "sortField"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "dfareporting.reports.files.get",
+          "method": "GET",
+          "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles/{profileId}/reports/{reportId}/files/{fileId}",
+          "query_parameters": [],
+          "body_parameters": []
+        }
+      ]
+    },
+    "sa360": {
+      "version": "v0",
+      "revision": "20260820",
+      "methods": [
+        {
+          "id": "searchads360.customers.listAccessibleCustomers",
+          "method": "GET",
+          "url": "https://searchads360.googleapis.com/v0/customers:listAccessibleCustomers",
+          "query_parameters": [],
+          "body_parameters": []
+        },
+        {
+          "id": "searchads360.customers.customColumns.list",
+          "method": "GET",
+          "url": "https://searchads360.googleapis.com/v0/customers/{+customerId}/customColumns",
+          "query_parameters": [],
+          "body_parameters": []
+        },
+        {
+          "id": "searchads360.customers.searchAds360.search",
+          "method": "POST",
+          "url": "https://searchads360.googleapis.com/v0/customers/{+customerId}/searchAds360:search",
+          "query_parameters": [],
+          "body_parameters": [
+            "pageToken",
+            "pageSize",
+            "validateOnly",
+            "summaryRowSetting",
+            "query",
+            "returnTotalResultsCount"
+          ]
+        },
+        {
+          "id": "searchads360.searchAds360Fields.search",
+          "method": "POST",
+          "url": "https://searchads360.googleapis.com/v0/searchAds360Fields:search",
+          "query_parameters": [],
+          "body_parameters": [
+            "pageSize",
+            "query",
+            "pageToken"
+          ]
+        }
+      ]
+    },
+    "dbm": {
+      "version": "v2",
+      "revision": "20261021",
+      "methods": [
+        {
+          "id": "doubleclickbidmanager.queries.list",
+          "method": "GET",
+          "url": "https://doubleclickbidmanager.googleapis.com/v2/queries",
+          "query_parameters": [
+            "orderBy",
+            "pageToken",
+            "pageSize"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "doubleclickbidmanager.queries.reports.get",
+          "method": "GET",
+          "url": "https://doubleclickbidmanager.googleapis.com/v2/queries/{queryId}/reports/{reportId}",
+          "query_parameters": [],
+          "body_parameters": []
+        },
+        {
+          "id": "doubleclickbidmanager.queries.reports.list",
+          "method": "GET",
+          "url": "https://doubleclickbidmanager.googleapis.com/v2/queries/{queryId}/reports",
+          "query_parameters": [
+            "pageSize",
+            "orderBy",
+            "pageToken"
+          ],
+          "body_parameters": []
+        }
+      ]
+    }
+  }
+}
