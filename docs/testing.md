@@ -19,7 +19,7 @@ read-only endpoint enforcement, pagination/filter mapping, date validation,
 response-size bounds, sanitized errors, MCP annotations and input schemas.
 A real stdio subprocess is initialized and queried without Google credentials.
 Request contracts are checked against a reduced snapshot of Google's public
-Discovery documents retrieved on 2026-10-30.
+Discovery documents retrieved on 2026-10-30 (CM360 creatives added from Discovery on 2026-10-31).
 
 CI runs on Python 3.10, 3.12 and 3.14, plus a macOS bundle startup job.
 The desktop builder uses Python and the official MCPB schema, avoiding Node build dependencies. Unit tests do not prove that a particular
@@ -47,3 +47,21 @@ Google account has product access or that its API quotas are available.
 No live authenticated API calls are part of the automated suite. Empty lists may
 be legitimate. A 403 requires checking product membership, API enablement, scopes
 and quota; it does not automatically mean the implementation is broken.
+
+## CM360 creative smoke test
+
+1. Discover a profile, advertiser and campaign, keeping the same account alias.
+2. Call `list_cm360_creatives` with those IDs and a small page size. Follow
+   `nextPageToken`; compare names, formats and sizes with the CM360 UI.
+3. Call `get_cm360_creative` for an HTML5 result. Inspect `creativeAssets` for
+   `BACKUP_IMAGE`, its identifier, filename and size. Also check an image creative
+   and a creative without backup assets; absence must not produce invented URLs.
+4. Record whether the actual response includes any usable backup-image URL.
+   Filenames, click-through URLs and impression trackers do not count. The public
+   v5 schema provides no backup-image download endpoint; metadata alone does not
+   prove image availability. Do not fetch tracking URLs to test a thumbnail.
+5. Confirm that missing previews are displayed as unavailable by the consuming UI.
+
+This live check was not run during implementation: local Google OAuth client
+configuration was unavailable. Automated fixtures cover metadata and absent assets,
+not the ability to download a real backup image.

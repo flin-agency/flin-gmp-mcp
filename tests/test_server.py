@@ -55,6 +55,13 @@ def recorded(monkeypatch):
         ("list_cm360_profiles", {}, "cm360", "userprofiles"),
         ("list_cm360_advertisers", {"profile_id": "1"}, "cm360", "userprofiles/1/advertisers"),
         ("list_cm360_campaigns", {"profile_id": "1"}, "cm360", "userprofiles/1/campaigns"),
+        ("list_cm360_creatives", {"profile_id": "1"}, "cm360", "userprofiles/1/creatives"),
+        (
+            "get_cm360_creative",
+            {"profile_id": "1", "creative_id": "2"},
+            "cm360",
+            "userprofiles/1/creatives/2",
+        ),
         ("list_cm360_reports", {"profile_id": "1"}, "cm360", "userprofiles/1/reports"),
         (
             "list_cm360_report_files",
@@ -169,7 +176,7 @@ def test_invalid_dates_never_reach_google(recorded, start, end):
 
 async def test_schema_annotations_and_validation(recorded):
     tools = await server.mcp.list_tools()
-    assert len(tools) == 27
+    assert len(tools) == 29
     for tool in tools:
         assert tool.annotations.readOnlyHint is (tool.name != "authenticate")
         assert tool.annotations.destructiveHint is False
@@ -187,10 +194,76 @@ async def test_stdio_handshake_and_missing_config_without_google():
         init = await session.initialize()
         assert init.serverInfo.name == "flin-gmp-mcp"
         listed = await session.list_tools()
-        assert len(listed.tools) == 27
+        assert len(listed.tools) == 29
         health = await session.call_tool("health_check", {})
         assert not health.isError
         assert "missing_configuration" in health.content[0].text
         failure = await session.call_tool("get_organization", {"organization": "../bad"})
         assert failure.isError
         assert "invalid_arguments" in failure.content[0].text
+
+
+def test_cm360_creative_filters_and_unmodified_assets(recorded):
+    creative = {
+        "id": "3",
+        "name": "HTML5 banner",
+        "type": "HTML5_BANNER",
+        "size": {"width": 300, "height": 250},
+        "creativeAssets": [
+            {"role": "PRIMARY", "assetIdentifier": {"name": "banner.zip", "type": "HTML"}},
+            {"role": "BACKUP_IMAGE", "assetIdentifier": {"name": "backup.jpg", "type": "IMAGE"}},
+        ],
+    }
+    recorded.return_value = {"creatives": [creative], "nextPageToken": "next"}
+    response = server.list_cm360_creatives(
+        "1",
+        advertiser_id="2",
+        campaign_id="4",
+        search="banner*",
+        active=False,
+        archived=False,
+        creative_ids=["3", "5"],
+        types=["HTML5_BANNER", "DISPLAY"],
+        page_size=10,
+        page_token="previous",
+        account="work",
+    )
+    assert recorded.call_args.kwargs["params"] == {
+        "advertiserId": "2",
+        "campaignId": "4",
+        "searchString": "banner*",
+        "active": False,
+        "archived": False,
+        "ids": ["3", "5"],
+        "types": ["HTML5_BANNER", "DISPLAY"],
+        "maxResults": 10,
+        "pageToken": "previous",
+    }
+    assert response["data"] == {"creatives": [creative], "nextPageToken": "next"}
+    recorded.return_value = creative
+    assert server.get_cm360_creative("1", "3")["data"] == creative
+    recorded.return_value = {"id": "3"}
+    assert server.get_cm360_creative("1", "3")["data"] == {"id": "3"}
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"profile_id": "../1"},
+        {"advertiser_id": ""},
+        {"campaign_id": "1/creatives"},
+        {"creative_ids": ["1", "../2"]},
+        {"page_size": 0},
+        {"page_size": 1001},
+    ],
+)
+def test_invalid_creative_filters_do_not_request(recorded, kwargs):
+    with pytest.raises(ToolError, match="invalid_arguments"):
+        server.list_cm360_creatives(**{"profile_id": "1", **kwargs})
+    recorded.assert_not_called()
+
+
+def test_invalid_creative_id_does_not_request(recorded):
+    with pytest.raises(ToolError, match="invalid_arguments"):
+        server.get_cm360_creative("1", "2?alt=media")
+    recorded.assert_not_called()

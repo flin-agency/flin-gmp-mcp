@@ -204,8 +204,40 @@
           "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles/{profileId}/reports/{reportId}/files/{fileId}",
           "query_parameters": [],
           "body_parameters": []
+        },
+        {
+          "id": "dfareporting.creatives.list",
+          "method": "GET",
+          "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles/{+profileId}/creatives",
+          "query_parameters": [
+            "sortOrder",
+            "studioCreativeId",
+            "creativeFieldIds",
+            "types",
+            "maxResults",
+            "companionCreativeIds",
+            "pageToken",
+            "advertiserId",
+            "active",
+            "renderingIds",
+            "ids",
+            "searchString",
+            "sortField",
+            "sizeIds",
+            "campaignId",
+            "archived"
+          ],
+          "body_parameters": []
+        },
+        {
+          "id": "dfareporting.creatives.get",
+          "method": "GET",
+          "url": "https://dfareporting.googleapis.com/dfareporting/v5/userprofiles/{+profileId}/creatives/{+id}",
+          "query_parameters": [],
+          "body_parameters": []
         }
-      ]
+      ],
+      "retrieved": "2026-10-31"
     },
     "sa360": {
       "version": "v0",

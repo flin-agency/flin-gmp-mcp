@@ -22,6 +22,8 @@ All data tools accept optional `account`. Call `authenticate` once before readin
 | `list_cm360_profiles` | Discover accessible CM360 user profiles. Choose profileId for subsequent CM360 tools. |
 | `list_cm360_advertisers` | List CM360 advertisers for a user profile; optional native name/ID search with * wildcards. |
 | `list_cm360_campaigns` | List CM360 campaigns. Omit archived for both active and archived campaigns. |
+| `list_cm360_creatives` | List CM360 creatives with names, types, sizes and asset metadata; filter by advertiser or campaign. |
+| `get_cm360_creative` | Get full CM360 creative metadata, including backup-image asset identifiers and available serving URLs. |
 | `list_cm360_reports` | List saved CM360 report definitions visible to this profile. Does not execute reports. |
 | `list_cm360_report_files` | List existing CM360 report files and their status; no new report is generated. |
 | `get_cm360_report_file` | Get existing CM360 report file metadata and download URLs; does not download CSV content. |
@@ -74,3 +76,34 @@ The `tool`/`arguments` objects illustrate tool calls, not terminal commands.
 - `health_check` reports saved-token state, not live account authorization.
 - Raw upstream error bodies are intentionally omitted because they can include
   sensitive data. API errors expose a stable code and suggested next steps.
+
+## CM360 creative assets and previews
+
+Use `list_cm360_creatives(profile_id, advertiser_id=..., campaign_id=...)` to
+find creatives associated with a campaign. Filters are optional; `creative_ids`,
+`types`, `search`, `active` and `archived` can narrow the result. Continue with
+`page_token` and the same filters. Use `get_cm360_creative(profile_id, creative_id)`
+for an individual creative. Both preserve Google's complete metadata, including
+`name`, `type`, `size`, `additionalSizes` and `creativeAssets` when present.
+
+For a creative gallery, show name, format and dimensions. Inspect assets with
+`role == "BACKUP_IMAGE"` for HTML5 fallback-image metadata (identifier, filename,
+size). Missing fields/assets remain missing; do not assume every result contains
+a backup. A filename or asset ID is not a usable image URL.
+
+The [v5 Creative schema](https://developers.google.com/doubleclick-advertisers/rest/v5/creatives)
+does not document a backup-image download or preview URL. The
+[creativeAssets resource](https://developers.google.com/doubleclick-advertisers/rest/v5/creativeAssets)
+only exposes insertion, not download. `progressiveServingUrl` and
+`streamingServingUrl` are documented for video assets, not HTML5 backups.
+Click-through URLs, tracking URLs and `redirectUrl` must not be used as thumbnails.
+Do not guess CDN URLs from filenames or execute returned `htmlCode`.
+
+Until an actual usable image URL or separately supplied image is available, show
+an explicit “Preview unavailable” placeholder alongside the metadata. The connector
+returns JSON metadata, not image bytes, extracted ZIPs or an HTML5 renderer.
+The existing CM360 `dfatrafficking` scope covers both new calls.
+
+Live verification still requires an authorized CM360 account: local configuration
+was missing during implementation, so no claim is made that real backup-image
+files can be retrieved. Follow the smoke test in `testing.md`.

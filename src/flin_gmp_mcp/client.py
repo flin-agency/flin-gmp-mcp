@@ -25,7 +25,7 @@ BASE_URLS = {
 READ_PATHS = {
     "admin": r"organizations(?:/[A-Za-z0-9_-]+(?:/analyticsAccountLinks)?)?",
     "dv360": r"(?:partners|advertisers)(?:/[0-9]+)?|advertisers/[0-9]+/(?:campaigns|insertionOrders|lineItems|creatives)(?:/[0-9]+)?",
-    "cm360": r"userprofiles|userprofiles/[0-9]+/(?:advertisers|campaigns|reports)|userprofiles/[0-9]+/reports/[0-9]+/files(?:/[0-9]+)?",
+    "cm360": r"userprofiles|userprofiles/[0-9]+/(?:advertisers|campaigns|reports|creatives(?:/[0-9]+)?)|userprofiles/[0-9]+/reports/[0-9]+/files(?:/[0-9]+)?",
     "sa360": r"customers:listAccessibleCustomers|customers/[0-9]+/customColumns",
     "dbm": r"queries(?:/[0-9]+(?:/reports(?:/[0-9]+)?)?)?",
 }

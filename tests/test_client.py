@@ -62,6 +62,10 @@ def test_search_only_post_and_manager_header(transport):
         ("admin", "https://evil.example/token", None),
         ("dv360", "advertisers/1:bulkEdit", {}),
         ("cm360", "userprofiles/1/reports/2/run", {}),
+        ("cm360", "userprofiles/1/creatives", {}),
+        ("cm360", "userprofiles/1/creatives/2", {}),
+        ("cm360", "userprofiles/1/creatives/2/preview", None),
+        ("cm360", "userprofiles/1/creativeAssets/2", None),
         ("dbm", "queries/1:run", {}),
         ("sa360", "customers/1:mutate", {"query": "SELECT campaign.id FROM campaign"}),
         ("sa360", "customers/1/searchAds360:search", {"query": "DELETE FROM campaign"}),
@@ -151,3 +155,11 @@ def test_generic_errors_never_expose_exception_text():
 def test_oversized_response_has_actionable_error():
     assert client.error_message(client.ResponseTooLargeError()).startswith("response_too_large:")
     assert "page_size" in client.error_message(client.ResponseTooLargeError())
+
+
+@pytest.mark.parametrize("path", ["userprofiles/1/creatives", "userprofiles/1/creatives/2"])
+def test_creative_read_routes(transport, path):
+    session, _ = transport
+    client.request("cm360", path, params={"ids": ["2", "3"], "active": False})
+    assert session.request.call_args.args == ("GET", client.BASE_URLS["cm360"] + path)
+    assert session.request.call_args.kwargs["params"] == {"ids": ["2", "3"], "active": "false"}

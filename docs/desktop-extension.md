@@ -1,6 +1,6 @@
 # macOS installation (Claude Desktop)
 
-1. Download `flin-gmp-mcp-0.1.0.mcpb` from the repository's v0.1.0 release.
+1. Download `flin-gmp-mcp-0.1.1.mcpb` from the repository's v0.1.1 release.
 2. Open the file with a current Claude Desktop version that supports uv-based
    desktop extensions. Alternatively import it from Claude's extension settings.
 3. Enter your Google Cloud **Desktop app** OAuth client ID and client secret.
@@ -22,11 +22,11 @@ extension import flow. See the main README for OAuth setup and token storage.
 
 ```bash
 uv sync --locked --extra dev
-uv run python scripts/build_mcpb.py --tag v0.1.0
-uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.0.mcpb
+uv run python scripts/build_mcpb.py --tag v0.1.1
+uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.1.mcpb
 ```
 
 The builder validates the manifest against the official MCPB v0.4 schema, includes only
 allowlisted runtime files, rejects symlinks, checks version consistency and
 creates a checksum. The smoke test starts the actual extracted bundle, discovers
-all 27 tools and verifies the offline health check over MCP stdio.
+all 29 tools and verifies the offline health check over MCP stdio.

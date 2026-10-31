@@ -11,7 +11,7 @@ private local tokens, and stdio transport.
 | GMP Admin | Organizations and linked Analytics accounts | v1alpha |
 | Display & Video 360 | Partners, advertisers, campaigns, insertion orders, line items, creatives | v4 |
 | DV360 reporting | Existing report queries, report runs, status and download URLs | Bid Manager v2 |
-| Campaign Manager 360 | User profiles, advertisers, campaigns, saved reports and existing file metadata/URLs | v5 |
+| Campaign Manager 360 | User profiles, advertisers, campaigns, creatives with sizes/assets, saved reports and existing file metadata/URLs | v5 |
 | Search Ads 360 | Customer discovery, manager hierarchy, campaign performance, custom SELECT queries and field discovery | Reporting v0 |
 
 GA4 reporting belongs in the separate `flin-ga4-mcp`. Google Ads, Search Console
@@ -83,16 +83,16 @@ replace a stale login or switch the selected account. No secrets are returned.
 ## Install from PyPI
 
 ```bash
-uvx flin-gmp-mcp@0.1.0
+uvx flin-gmp-mcp@0.1.1
 ```
 
-In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.0"]`
+In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.1"]`
 and the same Google environment variables shown above.
 
 ## macOS desktop installation
 
-Download `flin-gmp-mcp-0.1.0.mcpb` from the
-[v0.1.0 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.0)
+Download `flin-gmp-mcp-0.1.1.mcpb` from the
+[v0.1.1 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.1)
 and import it into Claude Desktop. The package includes the server and locked
 dependency definitions; the first launch needs internet access. Enter your own
 Google OAuth credentials in the extension settings.

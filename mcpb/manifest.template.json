@@ -156,6 +156,14 @@
       "description": "List CM360 campaigns. Omit archived for both active and archived campaigns."
     },
     {
+      "name": "list_cm360_creatives",
+      "description": "List CM360 creatives with names, types, sizes and asset metadata; filter by advertiser or campaign."
+    },
+    {
+      "name": "get_cm360_creative",
+      "description": "Get full CM360 creative metadata, including backup-image asset identifiers and available serving URLs."
+    },
+    {
       "name": "list_cm360_reports",
       "description": "List saved CM360 report definitions visible to this profile. Does not execute reports."
     },

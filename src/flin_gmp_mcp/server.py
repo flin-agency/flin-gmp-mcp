@@ -331,6 +331,63 @@ def list_cm360_campaigns(
 
 
 @tool()
+def list_cm360_creatives(
+    profile_id: str,
+    advertiser_id: str | None = None,
+    campaign_id: str | None = None,
+    search: str | None = None,
+    active: bool | None = None,
+    archived: bool | None = None,
+    creative_ids: list[str] | None = None,
+    types: list[str] | None = None,
+    page_size: int = 100,
+    page_token: str | None = None,
+    account: str | None = None,
+) -> dict[str, Any]:
+    """List CM360 creatives with names, types, sizes and creativeAssets (one page, max 1000).
+
+    Filter by advertiser/campaign, IDs, native creative types or name/ID search (* allowed).
+    Omit active/archived to include both states. Preserve filters for nextPageToken.
+    HTML5 backup assets have role BACKUP_IMAGE; assetIdentifier.name is a filename,
+    not a downloadable URL. This returns metadata, not image bytes or rendered HTML5.
+    """
+    return result(
+        "cm360",
+        f"userprofiles/{numeric_id(profile_id)}/creatives",
+        account=account,
+        params={
+            **page_params(page_size, page_token, size_key="maxResults"),
+            "advertiserId": numeric_id(advertiser_id) if advertiser_id is not None else None,
+            "campaignId": numeric_id(campaign_id) if campaign_id is not None else None,
+            "searchString": search,
+            "active": active,
+            "archived": archived,
+            "ids": [numeric_id(value) for value in creative_ids] if creative_ids else None,
+            "types": types,
+        },
+    )
+
+
+@tool()
+def get_cm360_creative(
+    profile_id: str, creative_id: str, account: str | None = None
+) -> dict[str, Any]:
+    """Get full CM360 creative metadata including sizes, assets and available serving URLs.
+
+    Use IDs from list_cm360_creatives. For HTML5, inspect creativeAssets with role
+    BACKUP_IMAGE. No image download/preview URL is documented for those assets;
+    progressiveServingUrl and streamingServingUrl are documented for video only.
+    Click-through/tracking URLs are not image URLs. Never construct CDN URLs from
+    asset names or execute returned htmlCode. Missing assets/URLs remain missing.
+    """
+    return result(
+        "cm360",
+        f"userprofiles/{numeric_id(profile_id)}/creatives/{numeric_id(creative_id)}",
+        account=account,
+    )
+
+
+@tool()
 def list_cm360_reports(
     profile_id: str,
     scope: Literal["MINE", "ALL"] = "MINE",
