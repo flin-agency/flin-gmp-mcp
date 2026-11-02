@@ -65,3 +65,21 @@ and quota; it does not automatically mean the implementation is broken.
 This live check was not run during implementation: local Google OAuth client
 configuration was unavailable. Automated fixtures cover metadata and absent assets,
 not the ability to download a real backup image.
+
+## Desktop updater
+
+`tests/test_bootstrap.py` covers refresh arguments, credential-free resolution,
+rejected downgrades/prereleases/major upgrades, timeouts, cached and bundled fallback,
+stdout hygiene and disabling updates. The regular bundle smoke test disables updates
+so CI verifies the code being released, not a previously published server.
+
+After PyPI publication, run:
+
+```bash
+uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.2.mcpb --auto-update
+```
+
+Check stderr for `starting PyPI runtime 0.1.2` (or a newer stable 0.x version),
+not just successful tool discovery: a working bundled fallback alone does not prove
+that the PyPI update succeeded. The same real MCP handshake validates the selected
+runtime's tools. An update only takes effect when the connector restarts.

@@ -15,7 +15,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 
-async def check_bundle(bundle: Path) -> None:
+async def check_bundle(bundle: Path, *, auto_update: bool = False) -> None:
     with tempfile.TemporaryDirectory(prefix="flin-gmp smoke ") as directory:
         root = Path(directory)
         with zipfile.ZipFile(bundle) as archive:
@@ -25,6 +25,7 @@ async def check_bundle(bundle: Path) -> None:
             archive.extractall(root)
         manifest = json.loads((root / "manifest.json").read_text())
         env = {key: value for key, value in os.environ.items() if not key.startswith("GOOGLE_")}
+        env["FLIN_GMP_AUTO_UPDATE"] = str(auto_update).lower()
         config = manifest["server"]["mcp_config"]
         params = StdioServerParameters(
             command=config["command"],
@@ -37,7 +38,11 @@ async def check_bundle(bundle: Path) -> None:
             ) as session:
                 await session.initialize()
                 listing = await session.list_tools()
-                if {t.name for t in listing.tools} != {t["name"] for t in manifest["tools"]}:
+                expected = {t["name"] for t in manifest["tools"]}
+                actual = {t.name for t in listing.tools}
+                if (not auto_update and actual != expected) or (
+                    auto_update and not expected <= actual
+                ):
                     raise RuntimeError("Bundle manifest and discovered tools differ")
                 result = await session.call_tool("health_check", {})
                 if result.isError or result.structuredContent["status"] != "missing_configuration":
@@ -48,4 +53,6 @@ async def check_bundle(bundle: Path) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bundle", type=Path)
-    asyncio.run(check_bundle(parser.parse_args().bundle))
+    parser.add_argument("--auto-update", action="store_true", help="Exercise the PyPI update path")
+    args = parser.parse_args()
+    asyncio.run(check_bundle(args.bundle, auto_update=args.auto_update))

@@ -83,16 +83,16 @@ replace a stale login or switch the selected account. No secrets are returned.
 ## Install from PyPI
 
 ```bash
-uvx flin-gmp-mcp@0.1.1
+uvx flin-gmp-mcp@0.1.2
 ```
 
-In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.1"]`
+In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.2"]`
 and the same Google environment variables shown above.
 
 ## macOS desktop installation
 
-Download `flin-gmp-mcp-0.1.1.mcpb` from the
-[v0.1.1 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.1)
+Download `flin-gmp-mcp-0.1.2.mcpb` from the
+[v0.1.2 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.2)
 and import it into Claude Desktop. The package includes the server and locked
 dependency definitions; the first launch needs internet access. Enter your own
 Google OAuth credentials in the extension settings.
@@ -205,3 +205,11 @@ Verified against Google's REST references and live discovery documents:
 - [Desktop OAuth](https://developers.google.com/identity/protocols/oauth2/native-app)
 
 MIT © flin GmbH.
+
+### Desktop auto-updates
+
+From bundle 0.1.2, the desktop launcher loads the latest stable 0.x server from PyPI
+at each connector start. Install that bundle once, then restart the connector to
+pick up future server releases. Cached and bundled fallbacks handle update failures.
+`health_check.version` shows the running server version. See
+[desktop update details](docs/desktop-extension.md#automatic-server-updates-from-012).

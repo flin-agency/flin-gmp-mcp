@@ -11,6 +11,9 @@ telemetry, analytics, or advertising tracking.
   Bid Manager, Campaign Manager 360 and Search Ads 360 APIs, as enabled by you.
 - Requested account, campaign and report data is returned to your MCP client.
   That client's data policies apply to its use of the results.
+- Starting the desktop extension checks PyPI for stable server updates by default.
+  Package downloads use PyPI and its file hosts through uv; Google credentials
+  are excluded from the updater process. Updates can be disabled in extension settings.
 - Installing the desktop bundle may download Python and locked dependencies
   through uv. These downloads do not contain your Google tokens or report data.
 - Delete local token files to remove saved sign-ins; revoke the application's

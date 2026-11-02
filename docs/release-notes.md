@@ -1,27 +1,16 @@
-## New in 0.1.1
+## New in 0.1.2
 
-- Add `list_cm360_creatives` and `get_cm360_creative` with names, formats,
-  dimensions and complete asset metadata.
-- Filter creatives by advertiser, campaign, IDs, type, name and status; support pagination.
-- Document HTML5 backup-image identification and preview limitations. The API does
-  not document a backup-image download endpoint. Live image retrieval remains unverified.
-- Validate the new routes against Google Discovery; 123 automated tests pass.
+The desktop extension now checks PyPI at each connector start and loads the latest
+stable 0.x server automatically. Install this bundle once to enable future updates;
+restart Claude or the connector after publishing a new server version.
 
-Read-only Google Marketing Platform MCP with 29 tools for GMP Admin, Display &
-Video 360, Campaign Manager 360 and Search Ads 360. Includes browser OAuth,
-separate Google accounts, pagination and private local token storage.
+- Dynamic tool discovery includes new server tools without reinstalling the bundle.
+- Bounded update checks fall back to cached or bundled code if unavailable.
+- Existing Google settings and saved sign-ins are preserved.
+- Disable automatic updates in extension settings to use only the bundled version.
+- The included server provides 29 tools, including CM360 creative list/detail queries.
+  HTML5 backup-image downloads remain unverified; these tools return asset metadata.
 
-## Install
-
-- **macOS / Claude Desktop:** Download the `.mcpb` file below and open it with
-  Claude Desktop. Enter your Google Desktop OAuth client ID and secret, then run
-  `authenticate`. Python 3.12 and locked dependencies are managed through uv.
-- **Other stdio MCP clients:** `uvx flin-gmp-mcp@0.1.1`.
-
-The bundle needs internet on first launch and is not signed. `SHA256SUMS`
-contains its checksum. Setup instructions are in `docs/desktop-extension.md`.
-
-Automated checks cover all API routes, authentication failure cases, packaging,
-and an actual MCP stdio handshake. Authenticated Google product access still
-requires your own account and enabled APIs. DV360/CM360 report tools return
-existing report metadata and URLs; SA360 returns performance rows directly.
+Download the `.mcpb` below for Claude Desktop, or run `uvx flin-gmp-mcp@0.1.2`.
+The extension version identifies the launcher; `health_check.version` shows the
+actual server version. Updates to the launcher itself require another bundle install.

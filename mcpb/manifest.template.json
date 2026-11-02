@@ -24,7 +24,8 @@
       "env": {
         "GOOGLE_CLIENT_ID": "${user_config.google_client_id}",
         "GOOGLE_CLIENT_SECRET": "${user_config.google_client_secret}",
-        "GOOGLE_GMP_SERVICES": "${user_config.services}"
+        "GOOGLE_GMP_SERVICES": "${user_config.services}",
+        "FLIN_GMP_AUTO_UPDATE": "${user_config.auto_update}"
       }
     }
   },
@@ -80,6 +81,12 @@
       "description": "Comma-separated selection of admin,dv360,cm360,sa360. Enable the corresponding Google APIs.",
       "required": true,
       "default": "admin,dv360,cm360,sa360"
+    },
+    "auto_update": {
+      "type": "boolean",
+      "title": "Automatic server updates",
+      "description": "Load the latest stable 0.x release from PyPI when the connector starts. Falls back to cached or bundled code if unavailable. Restart the connector to apply updates.",
+      "default": true
     }
   },
   "tools": [
@@ -199,5 +206,6 @@
       "name": "list_sa360_custom_columns",
       "description": "List custom columns available to an SA360 customer."
     }
-  ]
+  ],
+  "tools_generated": true
 }
