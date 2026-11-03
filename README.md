@@ -1,6 +1,6 @@
 # flin-gmp-mcp
 
-Read-only MCP server for **Google Marketing Platform**, built like the other
+MCP server for **Google Marketing Platform** with campaign read access and DV360 report creation, built like the other
 [flin MCPs](https://github.com/flin-agency): Python, FastMCP, `uv`, browser OAuth,
 private local tokens, and stdio transport.
 
@@ -10,7 +10,7 @@ private local tokens, and stdio transport.
 | --- | --- | --- |
 | GMP Admin | Organizations and linked Analytics accounts | v1alpha |
 | Display & Video 360 | Partners, advertisers, campaigns, insertion orders, line items, creatives | v4 |
-| DV360 reporting | Existing report queries, report runs, status and download URLs | Bid Manager v2 |
+| DV360 reporting | Create report queries, start runs, read status and CSV values | Bid Manager v2 |
 | Campaign Manager 360 | User profiles, advertisers, campaigns, creatives with sizes/assets, saved reports and existing file metadata/URLs | v5 |
 | Search Ads 360 | Customer discovery, manager hierarchy, campaign performance, custom SELECT queries and field discovery | Reporting v0 |
 
@@ -18,9 +18,9 @@ GA4 reporting belongs in the separate `flin-ga4-mcp`. Google Ads, Search Console
 and Google Tag Manager are outside this package's scope. GMP account links are
 **Analytics account links**, not a universal cross-product account directory.
 
-No campaign mutations, account linking, report creation/execution, or arbitrary
-HTTP requests are exposed. DV360 and CM360 report tools return existing metadata
-and URLs, not downloaded CSV contents. SA360 returns performance rows directly.
+No campaign mutations, account linking or arbitrary HTTP requests are exposed.
+DV360 reports can be created and run, and completed CSV results can be read.
+CM360 reports still return existing metadata and URLs only. SA360 returns performance rows directly.
 DV360 uses v4; v5 was still labelled beta in Google's documentation when this
 implementation was verified on 2026-10-30.
 
@@ -83,16 +83,16 @@ replace a stale login or switch the selected account. No secrets are returned.
 ## Install from PyPI
 
 ```bash
-uvx flin-gmp-mcp@0.1.2
+uvx flin-gmp-mcp@0.1.3
 ```
 
-In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.2"]`
+In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.3"]`
 and the same Google environment variables shown above.
 
 ## macOS desktop installation
 
-Download `flin-gmp-mcp-0.1.2.mcpb` from the
-[v0.1.2 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.2)
+Download `flin-gmp-mcp-0.1.3.mcpb` from the
+[v0.1.3 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.3)
 and import it into Claude Desktop. The package includes the server and locked
 dependency definitions; the first launch needs internet access. Enter your own
 Google OAuth credentials in the extension settings.
@@ -137,7 +137,7 @@ directories must be owned by the user and not writable by others. Never commit
 these files. To disconnect locally, stop the server and delete the corresponding
 token file; revoke the app in your Google account to invalidate its access.
 
-## OAuth scopes and read-only boundary
+## OAuth scopes and campaign protection
 
 | Product | Scope suffixes under `https://www.googleapis.com/auth/` |
 | --- | --- |
@@ -147,10 +147,11 @@ token file; revoke the app in your Google account to invalidate its access.
 | SA360 | `doubleclicksearch` |
 
 Google's 360 APIs require scopes that can also permit writes. The MCP enforces
-read-only behavior with a fixed endpoint/method allowlist: GET requests and only
-SA360 reporting/field-search POST requests. Use read-only product roles wherever
-available for an additional account-level boundary. Authentication writes local
-credentials and is annotated separately from read-only data tools.
+a fixed endpoint/method allowlist: GET requests, SA360 reporting/field-search POSTs,
+and Bid Manager POSTs only to create queries and run reports. Campaigns, budgets,
+bids, targeting, creatives and account links cannot be changed. Report creation
+and execution are marked as non-read-only, non-idempotent tools; they create saved
+Google report resources. No delete or update endpoints are exposed.
 
 ## Results and pagination
 
@@ -165,6 +166,9 @@ first page as the full account total. Limits: DV360 200, Bid Manager 100,
 GMP Admin 1000, CM360 1000 (local cap), SA360 data search 10000. Responses over
 10 MiB are rejected; reduce the page size or selected fields. Requests have a
 10-second connection and 60-second read timeout, with no automatic quota retries.
+Google requests and browser sign-in run in worker threads so a slow call does not
+block the MCP event loop or unrelated tool calls. Cancelling a tool does not stop
+an already running HTTP request; its transport timeout still applies.
 
 SA360 IDs are bare digits without hyphens. `login_customer_id` selects the manager
 through which access is granted. `list_sa360_customers` lists directly accessible
@@ -213,3 +217,29 @@ at each connector start. Install that bundle once, then restart the connector to
 pick up future server releases. Cached and bundled fallbacks handle update failures.
 `health_check.version` shows the running server version. See
 [desktop update details](docs/desktop-extension.md#automatic-server-updates-from-012).
+
+### DV360 performance without a manually prepared report
+
+1. Discover the advertiser ID, then reuse a matching `list_dv360_report_queries` result
+   or call `create_dv360_report_query(title, advertiser_id)`.
+2. Call `run_dv360_report(query_id)`. It starts asynchronously and returns the report key.
+3. Check `get_dv360_report(query_id, report_id)` with pauses until `DONE` or `FAILED`.
+4. Read `read_dv360_report_rows(query_id, report_id)` and follow `next_row_offset`.
+
+New definitions default to STANDARD CSV reports for yesterday in the advertiser's
+timezone, with impressions and clicks by date and advertiser. Custom metrics and
+dimensions use Bid Manager `METRIC_*` and `FILTER_*` names; Google checks their
+compatibility. Supply both `start_date` and `end_date` for an explicit date range.
+Creation saves a query but does not run it. There is no automatic daily schedule,
+email notification or sharing on newly created queries. Running an existing query
+honors its existing notification settings. Reuse saved definitions for later days.
+
+CSV downloads are capped at 10 MiB and 1000 records per returned page. Values stay
+strings to preserve precision; output includes headers, totals and footer records.
+Use column labels for units and currencies and never add totals to detail rows.
+Downloads only use HTTPS Google Storage URLs obtained from authenticated report
+metadata, without forwarding Google OAuth credentials or following redirects.
+After an uncertain create/run outcome, list queries/runs before retrying to avoid
+duplicates. A completed report may still reflect Google's data processing delay.
+
+DV360 report creation and CSV reading require server version 0.1.3 or newer.

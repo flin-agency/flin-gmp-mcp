@@ -1,8 +1,10 @@
+import asyncio
 import json
 import os
 import re
 import sys
 from pathlib import Path
+from threading import Event
 from unittest.mock import Mock
 
 import pytest
@@ -176,15 +178,52 @@ def test_invalid_dates_never_reach_google(recorded, start, end):
 
 async def test_schema_annotations_and_validation(recorded):
     tools = await server.mcp.list_tools()
-    assert len(tools) == 29
+    assert len(tools) == 32
     for tool in tools:
-        assert tool.annotations.readOnlyHint is (tool.name != "authenticate")
+        assert tool.annotations.readOnlyHint is (
+            tool.name not in {"authenticate", "create_dv360_report_query", "run_dv360_report"}
+        )
         assert tool.annotations.destructiveHint is False
         if tool.name == "health_check":
             assert tool.annotations.openWorldHint is False
     with pytest.raises(ToolError):
         await server.mcp.call_tool("list_cm360_reports", {"profile_id": "1", "scope": "INVALID"})
     recorded.assert_not_called()
+
+
+async def test_slow_google_call_does_not_block_health_or_followup(monkeypatch):
+    started = Event()
+    release = Event()
+
+    def slow_request(*args, **kwargs):
+        started.set()
+        if not release.wait(timeout=3):
+            raise TimeoutError("simulated stalled Google request")
+        return {"partners": []}
+
+    monkeypatch.setattr(server, "request", slow_request)
+    monkeypatch.setattr(server, "missing_required_env_vars", lambda: ["GOOGLE_CLIENT_ID"])
+    for _ in range(3):
+        started.clear()
+        release.clear()
+        pending = asyncio.create_task(server.mcp.call_tool("list_dv360_partners", {}))
+        try:
+            assert await asyncio.to_thread(started.wait, 1)
+            health = await asyncio.wait_for(server.mcp.call_tool("health_check", {}), 1)
+            assert "missing_configuration" in str(health)
+            assert not pending.done()
+        finally:
+            release.set()
+            await pending
+
+
+async def test_google_timeout_allows_subsequent_tool_calls(monkeypatch):
+    monkeypatch.setattr(server, "request", Mock(side_effect=TimeoutError("private details")))
+    with pytest.raises(ToolError, match="request_timeout") as error:
+        await server.mcp.call_tool("list_dv360_partners", {})
+    assert "private details" not in str(error.value)
+    monkeypatch.setattr(server, "request", Mock(return_value={"partners": []}))
+    assert await server.mcp.call_tool("list_dv360_partners", {})
 
 
 async def test_stdio_handshake_and_missing_config_without_google():
@@ -194,7 +233,7 @@ async def test_stdio_handshake_and_missing_config_without_google():
         init = await session.initialize()
         assert init.serverInfo.name == "flin-gmp-mcp"
         listed = await session.list_tools()
-        assert len(listed.tools) == 29
+        assert len(listed.tools) == 32
         health = await session.call_tool("health_check", {})
         assert not health.isError
         assert "missing_configuration" in health.content[0].text

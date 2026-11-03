@@ -16,7 +16,10 @@ All data tools accept optional `account`. Call `authenticate` once before readin
 | `list_dv360_insertion_orders` | List DV360 insertion orders settings (max 200). These are not performance metrics. |
 | `list_dv360_line_items` | List DV360 line items settings (max 200). These are not performance metrics. |
 | `list_dv360_creatives` | List DV360 creatives settings (max 200). These are not performance metrics. |
-| `list_dv360_report_queries` | List existing DV360 report definitions via Bid Manager v2 (max 100). No report creation. |
+| `create_dv360_report_query` | Save a STANDARD CSV report for an advertiser; defaults to yesterday. No campaign changes. |
+| `run_dv360_report` | Start a saved report asynchronously; returns a report key. |
+| `read_dv360_report_rows` | Read completed CSV values in bounded pages, including headers and footer records. |
+| `list_dv360_report_queries` | List existing DV360 report definitions via Bid Manager v2 (max 100). Reuse matching queries. |
 | `list_dv360_reports` | List existing runs of a DV360 report query, including available report metadata/URLs. |
 | `get_dv360_report` | Get an existing DV360 report's status and metadata, including its URL when available. |
 | `list_cm360_profiles` | Discover accessible CM360 user profiles. Choose profileId for subsequent CM360 tools. |
@@ -107,3 +110,21 @@ The existing CM360 `dfatrafficking` scope covers both new calls.
 Live verification still requires an authorized CM360 account: local configuration
 was missing during implementation, so no claim is made that real backup-image
 files can be retrieved. Follow the smoke test in `testing.md`.
+
+## DV360 report creation and results
+
+```json
+{"tool": "create_dv360_report_query", "arguments": {"title": "Daily advertiser performance", "advertiser_id": "1234567890", "account": "work"}}
+```
+
+Use the returned query ID with `run_dv360_report`. Keep that ID for subsequent
+runs: the default PREVIOUS_DAY range moves with the advertiser's date. This is an
+on-demand report, not a scheduled delivery. Both tools create report resources
+and must not be blindly retried after a timeout. List existing queries/runs first.
+For a historical period, pass both ISO dates to creation or override dates on a run.
+
+Use the returned report key with `get_dv360_report`. Once DONE, call
+`read_dv360_report_rows` using the same account alias. A FAILED run is terminal.
+Read subsequent pages using `next_row_offset`; CSV headers, totals and footer
+metadata remain in the returned records and must not be mistaken for detail rows.
+No campaign, budget, bid, targeting or creative update tools are provided.

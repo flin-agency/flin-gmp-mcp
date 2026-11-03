@@ -41,7 +41,7 @@
   "name": "flin-gmp-mcp",
   "display_name": "flin Google Marketing Platform",
   "description": "Read Google Marketing Platform organizations, DV360 campaigns, CM360 reports and SA360 performance.",
-  "long_description": "Connect Google Marketing Platform, Display & Video 360, Campaign Manager 360 and Search Ads 360 to Claude Desktop. Requires your own Google Desktop OAuth client and product access. Run authenticate for browser sign-in. Credentials stay on your computer. Google scopes may allow writes; this server only exposes read operations. GA4 reporting is provided by flin-ga4-mcp.",
+  "long_description": "Connect Google Marketing Platform, Display & Video 360, Campaign Manager 360 and Search Ads 360 to Claude Desktop. Requires your own Google Desktop OAuth client and product access. Run authenticate for browser sign-in. Credentials stay on your computer. Google scopes may allow writes; this server exposes reads plus DV360 report creation and execution. Campaign settings cannot be changed. GA4 reporting is provided by flin-ga4-mcp.",
   "repository": {
     "type": "git",
     "url": "https://github.com/flin-agency/flin-gmp-mcp.git"
@@ -139,8 +139,20 @@
       "description": "List DV360 creatives settings (max 200). These are not performance metrics."
     },
     {
+      "name": "create_dv360_report_query",
+      "description": "Create a saved STANDARD CSV report definition; never changes campaigns."
+    },
+    {
+      "name": "run_dv360_report",
+      "description": "Start an asynchronous DV360 report run; never changes campaigns or its definition."
+    },
+    {
+      "name": "read_dv360_report_rows",
+      "description": "Read generated DV360 CSV values (up to 1000 raw CSV records per call, 10 MiB file)."
+    },
+    {
       "name": "list_dv360_report_queries",
-      "description": "List existing DV360 report definitions via Bid Manager v2 (max 100). No report creation."
+      "description": "List existing DV360 report definitions via Bid Manager v2 (max 100). Reuse matching queries."
     },
     {
       "name": "list_dv360_reports",
@@ -164,11 +176,11 @@
     },
     {
       "name": "list_cm360_creatives",
-      "description": "List CM360 creatives with names, types, sizes and asset metadata; filter by advertiser or campaign."
+      "description": "List CM360 creatives with names, types, sizes and creativeAssets (one page, max 1000)."
     },
     {
       "name": "get_cm360_creative",
-      "description": "Get full CM360 creative metadata, including backup-image asset identifiers and available serving URLs."
+      "description": "Get full CM360 creative metadata including sizes, assets and available serving URLs."
     },
     {
       "name": "list_cm360_reports",

@@ -1,4 +1,4 @@
-"""Bounded requests to an explicit allowlist of read-only Google API routes."""
+"""Bounded Google reads plus explicitly allowlisted DV360 report creation/runs."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ BASE_URLS = {
     "sa360": "https://searchads360.googleapis.com/v0/",
     "dbm": "https://doubleclickbidmanager.googleapis.com/v2/",
 }
-# No arbitrary URL, method, or write endpoint is accepted, even by this internal client.
+# No campaign write or arbitrary URL/method is accepted by this internal client.
 READ_PATHS = {
     "admin": r"organizations(?:/[A-Za-z0-9_-]+(?:/analyticsAccountLinks)?)?",
     "dv360": r"(?:partners|advertisers)(?:/[0-9]+)?|advertisers/[0-9]+/(?:campaigns|insertionOrders|lineItems|creatives)(?:/[0-9]+)?",
@@ -85,10 +85,12 @@ def request(
     method = "POST" if body is not None else "GET"
     if service not in BASE_URLS:
         raise ValueError("Unknown service.")
-    pattern = SEARCH_PATH if service == "sa360" and method == "POST" else READ_PATHS[service]
-    if (method == "POST" and service != "sa360") or not re.fullmatch(pattern, path):
-        raise ValueError("Only allowlisted read operations are supported.")
-    if body is not None:
+    pattern = READ_PATHS[service]
+    if method == "POST":
+        pattern = {"sa360": SEARCH_PATH, "dbm": r"queries|queries/[0-9]+:run"}.get(service, r"(?!)")
+    if not re.fullmatch(pattern, path):
+        raise ValueError("Only reads and DV360 report creation/runs are supported.")
+    if body is not None and service == "sa360":
         validate_query(body.get("query", ""))
     if login_customer_id is not None:
         if service != "sa360":

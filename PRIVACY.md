@@ -9,6 +9,11 @@ telemetry, analytics, or advertising tracking.
   returned by MCP tools or included in the desktop bundle.
 - Data requests go to Google's Marketing Platform Admin, Display & Video 360,
   Bid Manager, Campaign Manager 360 and Search Ads 360 APIs, as enabled by you.
+- Creating a DV360 report saves its title, advertiser filter, fields and date range
+  at Google. Running it creates a report file. New queries disable email and sharing;
+  existing queries retain their notification settings. No campaign settings are changed.
+- Reading DV360 CSV values downloads the completed file from Google Cloud Storage
+  into memory and returns its records; the MCP does not save the file locally.
 - Requested account, campaign and report data is returned to your MCP client.
   That client's data policies apply to its use of the results.
 - Starting the desktop extension checks PyPI for stable server updates by default.

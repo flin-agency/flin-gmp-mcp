@@ -18,6 +18,9 @@ scope/client changes, token expiry and refresh, atomic private token storage,
 read-only endpoint enforcement, pagination/filter mapping, date validation,
 response-size bounds, sanitized errors, MCP annotations and input schemas.
 A real stdio subprocess is initialized and queried without Google credentials.
+Regression tests also hold Google requests open across repeated calls and verify
+that health checks remain responsive, and that a timed-out request does not prevent
+the next tool call from succeeding.
 Request contracts are checked against a reduced snapshot of Google's public
 Discovery documents retrieved on 2026-10-30 (CM360 creatives added from Discovery on 2026-10-31).
 
@@ -76,10 +79,22 @@ so CI verifies the code being released, not a previously published server.
 After PyPI publication, run:
 
 ```bash
-uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.2.mcpb --auto-update
+uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.3.mcpb --auto-update
 ```
 
-Check stderr for `starting PyPI runtime 0.1.2` (or a newer stable 0.x version),
+Check stderr for `starting PyPI runtime 0.1.3` (or a newer stable 0.x version),
 not just successful tool discovery: a working bundled fallback alone does not prove
 that the PyPI update succeeded. The same real MCP handshake validates the selected
 runtime's tools. An update only takes effect when the connector restarts.
+
+## DV360 report writes and CSV reads
+
+Automated tests verify report-only POST allowlisting, advertiser scoping, date
+validation, non-idempotent write annotations, asynchronous execution parameters,
+pending/failed states, CSV pagination, precise string values, download size bounds,
+and rejection of arbitrary download hosts and redirects.
+
+Live verification (not performed by the automated suite): create a STANDARD CSV
+query for a test advertiser, run it, check status until DONE, and compare the CSV
+records with DV360. Reuse that query for another date range and confirm that no
+campaign settings change. Creation leaves a saved query in the Google account.

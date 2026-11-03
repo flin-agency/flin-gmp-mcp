@@ -1,3 +1,3 @@
-"""flin's read-only Google Marketing Platform MCP server."""
+"""flin's Google Marketing Platform MCP: campaign reads and DV360 reports."""
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"

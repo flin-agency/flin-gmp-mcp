@@ -66,7 +66,8 @@ def test_search_only_post_and_manager_header(transport):
         ("cm360", "userprofiles/1/creatives/2", {}),
         ("cm360", "userprofiles/1/creatives/2/preview", None),
         ("cm360", "userprofiles/1/creativeAssets/2", None),
-        ("dbm", "queries/1:run", {}),
+        ("dbm", "queries/1", {}),
+        ("dbm", "queries/1:delete", {}),
         ("sa360", "customers/1:mutate", {"query": "SELECT campaign.id FROM campaign"}),
         ("sa360", "customers/1/searchAds360:search", {"query": "DELETE FROM campaign"}),
         ("dv360", "advertisers/../users", None),
@@ -163,3 +164,30 @@ def test_creative_read_routes(transport, path):
     client.request("cm360", path, params={"ids": ["2", "3"], "active": False})
     assert session.request.call_args.args == ("GET", client.BASE_URLS["cm360"] + path)
     assert session.request.call_args.kwargs["params"] == {"ids": ["2", "3"], "active": "false"}
+
+
+@pytest.mark.parametrize("path", ["queries", "queries/123:run"])
+def test_only_report_posts_are_allowed(transport, path):
+    session, _ = transport
+    client.request("dbm", path, body={})
+    assert session.request.call_args.args == ("POST", client.BASE_URLS["dbm"] + path)
+
+
+@pytest.mark.parametrize(
+    "service,path",
+    [
+        ("dv360", "advertisers/1/campaigns"),
+        ("dv360", "advertisers/1/insertionOrders"),
+        ("dv360", "advertisers/1/lineItems"),
+        ("dv360", "advertisers/1/creatives"),
+        ("dv360", "advertisers/1/lineItems/2:bulkEditAssignedTargetingOptions"),
+        ("admin", "organizations/1/analyticsAccountLinks"),
+        ("cm360", "userprofiles/1/campaigns"),
+    ],
+)
+def test_campaign_writes_stay_blocked_after_enabling_reports(monkeypatch, service, path):
+    auth = Mock()
+    monkeypatch.setattr(client, "get_credentials", auth)
+    with pytest.raises(ValueError):
+        client.request(service, path, body={"budget": 123})
+    auth.assert_not_called()
