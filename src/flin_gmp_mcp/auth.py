@@ -20,18 +20,58 @@ class AuthenticationRequiredError(AuthenticationError):
     """Raised when interactive OAuth is required to continue."""
 
 
+MAX_TOKEN_BYTES = 64 * 1024
+
+
+def _validate_private_directory(directory_stat: os.stat_result) -> None:
+    if not stat.S_ISDIR(directory_stat.st_mode):
+        raise AuthenticationError("Token storage must be a regular directory.")
+    if os.name != "nt" and (directory_stat.st_uid != os.getuid() or directory_stat.st_mode & 0o077):
+        raise AuthenticationError("Token storage must be owned and accessible only by its user.")
+
+
 def _load_token_info(token_path: Path) -> dict[str, Any]:
     if token_path.is_symlink():
         raise AuthenticationError("Refusing to read credentials through a symlinked token path.")
+    directory_fd = None
     try:
-        info = json.loads(token_path.read_text(encoding="utf-8"))
+        if os.name != "nt":
+            # Anchor the read to the checked directory; never follow a swapped symlink.
+            directory_fd = os.open(token_path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            _validate_private_directory(os.fstat(directory_fd))
+            fd = os.open(
+                token_path.name,
+                os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+                dir_fd=directory_fd,
+            )
+        else:
+            if token_path.parent.is_symlink():
+                raise AuthenticationError("Refusing a symlinked token directory.")
+            fd = os.open(token_path, os.O_RDONLY)
+        with os.fdopen(fd, "rb") as handle:
+            file_stat = os.fstat(handle.fileno())
+            if not stat.S_ISREG(file_stat.st_mode) or file_stat.st_nlink != 1:
+                raise AuthenticationError("Token storage must be a regular, unshared file.")
+            if os.name != "nt" and (file_stat.st_uid != os.getuid() or file_stat.st_mode & 0o077):
+                raise AuthenticationError(
+                    "Token file must be owned and accessible only by its user."
+                )
+            content = handle.read(MAX_TOKEN_BYTES + 1)
+        if len(content) > MAX_TOKEN_BYTES:
+            raise AuthenticationError("Token file exceeds the size limit.")
+        info = json.loads(content)
         if not isinstance(info, dict):
             raise AuthenticationError("Token file must contain an object.")
         return info
     except FileNotFoundError as exc:
         raise AuthenticationRequiredError("No token file found.") from exc
-    except json.JSONDecodeError as exc:
+    except (ValueError, UnicodeError) as exc:
         raise AuthenticationError("Token file is not valid JSON.") from exc
+    except OSError as exc:
+        raise AuthenticationError("Cannot securely open the token file.") from exc
+    finally:
+        if directory_fd is not None:
+            os.close(directory_fd)
 
 
 def _build_credentials_from_info(info: dict[str, Any], scopes: tuple[str, ...]) -> Any:
@@ -113,17 +153,8 @@ def _ensure_private_token_dir(token_path: Path) -> None:
     except FileExistsError:
         pass
 
-    directory_stat = token_dir.lstat()
-    if not stat.S_ISDIR(directory_stat.st_mode):
-        raise AuthenticationError("Token storage must be a regular directory.")
-    if os.name != "nt":
-        # Never chmod a caller-provided existing directory. It may be shared
-        # with other applications; only newly created storage is private by default.
-        if directory_stat.st_uid != os.getuid() or directory_stat.st_mode & 0o022:
-            raise AuthenticationError(
-                "Token storage must be owned by the current user and must not "
-                "be writable by other users. Choose a dedicated private directory."
-            )
+    # Never change permissions on a caller-provided directory.
+    _validate_private_directory(token_dir.lstat())
 
 
 def _write_credentials_atomically(token_json: str, token_path: Path) -> None:
@@ -145,8 +176,6 @@ def _write_credentials_atomically(token_json: str, token_path: Path) -> None:
             os.fsync(handle.fileno())
 
         os.replace(tmp_path, token_path)
-        if os.name != "nt":
-            os.chmod(token_path, 0o600)
     finally:
         try:
             tmp_path.unlink()

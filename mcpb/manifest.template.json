@@ -85,8 +85,8 @@
     "auto_update": {
       "type": "boolean",
       "title": "Automatic server updates",
-      "description": "Load the latest stable 0.x release from PyPI when the connector starts. Falls back to cached or bundled code if unavailable. Restart the connector to apply updates.",
-      "default": true
+      "description": "Optional: execute newer stable 0.x code from PyPI on startup. Leave disabled to use this release's reviewed server and locked dependencies. Restart the connector to apply changes.",
+      "default": false
     }
   },
   "tools": [

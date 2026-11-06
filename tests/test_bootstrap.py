@@ -23,6 +23,8 @@ def test_probe_refreshes_pypi_without_credentials(bootstrap, monkeypatch, tmp_pa
     monkeypatch.setattr(bootstrap.subprocess, "run", run)
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
     monkeypatch.setenv("UV_INDEX", "https://other.invalid")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "private-cloud-key")
+    monkeypatch.setenv("GH_TOKEN", "private-github-token")
     assert bootstrap.resolve_runtime("uv", offline=False) == (str(python), "0.9.0")
     command = run.call_args.args[0]
     assert "--refresh-package" in command
@@ -30,6 +32,8 @@ def test_probe_refreshes_pypi_without_credentials(bootstrap, monkeypatch, tmp_pa
     assert f"flin-gmp-mcp>={bootstrap.__version__},<1" in command
     assert "GOOGLE_CLIENT_SECRET" not in run.call_args.kwargs["env"]
     assert "UV_INDEX" not in run.call_args.kwargs["env"]
+    assert "AWS_SECRET_ACCESS_KEY" not in run.call_args.kwargs["env"]
+    assert "GH_TOKEN" not in run.call_args.kwargs["env"]
     assert run.call_args.kwargs["timeout"] == 30
 
 
@@ -75,10 +79,14 @@ def test_network_failure_uses_cache_then_bundle(bootstrap, monkeypatch, cached, 
     assert capsys.readouterr().out == ""
 
 
-def test_disabled_updates_use_bundle_without_network(bootstrap, monkeypatch):
+@pytest.mark.parametrize("setting", [None, "false"])
+def test_disabled_updates_use_bundle_without_network(bootstrap, monkeypatch, setting):
     from flin_gmp_mcp import server
 
-    monkeypatch.setenv("FLIN_GMP_AUTO_UPDATE", "false")
+    if setting is None:
+        monkeypatch.delenv("FLIN_GMP_AUTO_UPDATE", raising=False)
+    else:
+        monkeypatch.setenv("FLIN_GMP_AUTO_UPDATE", setting)
     resolve = Mock()
     monkeypatch.setattr(bootstrap, "resolve_runtime", resolve)
     fallback = Mock()

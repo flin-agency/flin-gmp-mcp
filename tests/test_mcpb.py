@@ -76,6 +76,7 @@ def test_bundle_excludes_credentials_and_development_files(
     )
     assert manifest["version"] == release_version(bundle_source)
     assert manifest["user_config"]["google_client_secret"]["sensitive"] is True
+    assert manifest["user_config"]["auto_update"]["default"] is False
     assert "--locked" in manifest["server"]["mcp_config"]["args"]
 
 

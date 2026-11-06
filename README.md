@@ -83,16 +83,16 @@ replace a stale login or switch the selected account. No secrets are returned.
 ## Install from PyPI
 
 ```bash
-uvx flin-gmp-mcp@0.1.3
+uvx flin-gmp-mcp@0.1.4
 ```
 
-In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.3"]`
+In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.4"]`
 and the same Google environment variables shown above.
 
 ## macOS desktop installation
 
-Download `flin-gmp-mcp-0.1.3.mcpb` from the
-[v0.1.3 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.3)
+Download `flin-gmp-mcp-0.1.4.mcpb` from the
+[v0.1.4 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.4)
 and import it into Claude Desktop. The package includes the server and locked
 dependency definitions; the first launch needs internet access. Enter your own
 Google OAuth credentials in the extension settings.
@@ -133,7 +133,9 @@ Default directories:
 
 The default token is `default.json`; named accounts use `<account>.json`. Writes
 are atomic and files use mode `0600` on POSIX. New directories use `0700`. Existing
-directories must be owned by the user and not writable by others. Never commit
+directories must be owned by the user with mode `0700`; token files must be
+owned by that user with mode `0600`. Unsafe storage is rejected on reads and writes.
+Symlinked directories/files, hard-linked files and oversized token files are rejected. Never commit
 these files. To disconnect locally, stop the server and delete the corresponding
 token file; revoke the app in your Google account to invalidate its access.
 
@@ -210,13 +212,16 @@ Verified against Google's REST references and live discovery documents:
 
 MIT © flin GmbH.
 
-### Desktop auto-updates
+### Desktop updates
 
-From bundle 0.1.2, the desktop launcher loads the latest stable 0.x server from PyPI
-at each connector start. Install that bundle once, then restart the connector to
-pick up future server releases. Cached and bundled fallbacks handle update failures.
-`health_check.version` shows the running server version. See
-[desktop update details](docs/desktop-extension.md#automatic-server-updates-from-012).
+Bundle 0.1.4 starts its included server with locked dependencies by default.
+Install a newer `.mcpb` release to update. **Automatic server updates** remain an
+explicit option in extension settings: enabling them executes newer stable 0.x
+releases from PyPI at connector startup, outside this release's reviewed versions.
+Existing installations may retain their previous enabled setting; turn it off to
+use the reviewed bundle. `health_check.version` shows the running server version.
+See [desktop update details](docs/desktop-extension.md#server-updates) and the
+[security review](SECURITY.md).
 
 ### DV360 performance without a manually prepared report
 

@@ -1,24 +1,28 @@
-## New in 0.1.3
+## Security release 0.1.4 — Claude Desktop for macOS
 
-DV360 performance can now be retrieved without manually preparing a report:
-create a saved STANDARD CSV query, start it asynchronously, check its status,
-and read the completed CSV records through MCP.
+Download **flin-gmp-mcp-0.1.4.mcpb** below and import it in Claude Desktop's extension
+settings. The same package supports Apple Silicon and Intel Macs. Enter your own
+Google Desktop OAuth client ID/secret, enable the Google products you use, then run
+`health_check` and `authenticate`. First launch needs internet for Python/dependencies.
 
-- `create_dv360_report_query`: choose advertiser, metrics, dimensions and dates;
-  defaults to yesterday, impressions and clicks. New queries disable email and sharing.
-- `run_dv360_report`: start an existing query without blocking until completion.
-- `read_dv360_report_rows`: retrieve bounded CSV pages while preserving precision,
-  headers, totals, currencies and footer records.
-- Slow Google requests and browser sign-in no longer block the MCP event loop.
-- Campaigns, budgets, bids, targeting and creatives remain protected from writes.
-  Only DV360 report creation and execution have been added to the POST allowlist.
+- Updated OAuthLib and pytest to versions without the known advisories found by
+  the dependency scan; future releases now require a passing dependency audit.
+- Hardened token reads against shared permissions, incorrect ownership, symlink
+  swaps, hard links, special files and oversized input.
+- Automatic server updates are **off by default**, so the package starts its
+  included server with locked dependencies. Existing settings may persist: disable
+  **Automatic server updates** explicitly if it was enabled before upgrading.
+- Update probes no longer inherit unrelated cloud secrets from the environment.
+- GitHub publication uses pinned Actions and requires bundle startup checks on
+  both Apple Silicon and Intel macOS runners.
 
-The server exposes 32 tools. Existing desktop bundles from 0.1.2 update the server
-from PyPI on restart when automatic updates are enabled. Otherwise install the
-new `.mcpb` below or run `uvx flin-gmp-mcp@0.1.3`.
+All 32 tools remain available, including DV360 report creation and CSV reads.
+Campaign settings cannot be changed. Google OAuth scopes can still grant broader
+permissions; enable only products you need.
 
-Validation: 171 automated tests, lint/format checks, Python package builds and
-metadata validation, plus desktop bundle startup/tool discovery. Live DV360 report
-creation and data comparison have not been tested with an authorized Google account.
-CSV downloads are limited to 10 MiB and 1000 records per call. Report creation/runs
-must not be blindly retried after a timeout; check existing queries/runs first.
+Validation: 186 tests, lint/format, Python package and reproducible MCPB checks,
+real MCP startup and dependency/secret scans. See **SECURITY-REVIEW.md** and
+**dependency-audit.json** below for scope, findings and limits.
+
+The bundle is unsigned and includes **SHA256SUMS**. Interactive Claude Desktop
+installation and live authenticated Google product behavior have not been tested.

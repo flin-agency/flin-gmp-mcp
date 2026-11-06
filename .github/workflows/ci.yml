@@ -11,24 +11,33 @@ jobs:
       matrix:
         python-version: ['3.10', '3.12', '3.14']
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
       - run: uv sync --locked --extra dev
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
       - run: uv build
+      - name: Audit locked dependencies
+        if: matrix.python-version == '3.12'
+        run: |
+          uv export --locked --extra dev --no-emit-project --format requirements-txt --output-file "$RUNNER_TEMP/audit-requirements.txt" > /dev/null
+          uvx pip-audit==2.10.1 --requirement "$RUNNER_TEMP/audit-requirements.txt" --no-deps --disable-pip --require-hashes
   desktop-bundle:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
       - run: uv sync --locked --extra dev
       - run: uv run python scripts/build_mcpb.py
       - run: uv run python scripts/check_mcpb.py dist/mcpb/*.mcpb

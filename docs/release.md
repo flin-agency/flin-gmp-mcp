@@ -16,7 +16,8 @@ bundle and SHA-256 checksum to a GitHub release. Branch pushes only run CI.
 4. Configure the GitHub `pypi` environment with the desired approval requirements.
 5. Commit the release, create the matching `vX.Y.Z` tag and push it when ready.
    Only tag pushes trigger publishing. The workflow rejects a version mismatch,
-   reruns tests and builds, validates Python metadata and the desktop bundle,
+   reruns tests and builds, audits locked runtime/development dependencies, validates Python
+   metadata and the desktop bundle on both Apple Silicon and Intel macOS runners,
    then publishes using OIDC without a stored PyPI token.
 6. Verify installation with `uvx flin-gmp-mcp@X.Y.Z` and the MCP handshake.
 

@@ -79,10 +79,10 @@ so CI verifies the code being released, not a previously published server.
 After PyPI publication, run:
 
 ```bash
-uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.3.mcpb --auto-update
+uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.4.mcpb --auto-update
 ```
 
-Check stderr for `starting PyPI runtime 0.1.3` (or a newer stable 0.x version),
+Check stderr for `starting PyPI runtime 0.1.4` (or a newer stable 0.x version),
 not just successful tool discovery: a working bundled fallback alone does not prove
 that the PyPI update succeeded. The same real MCP handshake validates the selected
 runtime's tools. An update only takes effect when the connector restarts.

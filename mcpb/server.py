@@ -1,4 +1,4 @@
-"""Desktop bootstrap: refresh the PyPI runtime at startup, with local fallbacks."""
+"""Desktop bootstrap: audited bundle by default, with explicitly opt-in PyPI updates."""
 
 from __future__ import annotations
 
@@ -14,6 +14,26 @@ from flin_gmp_mcp import __version__
 
 PACKAGE = "flin-gmp-mcp"
 UPDATE_TIMEOUT = 30
+# Only OS/runtime settings are needed to resolve packages. Do not pass unrelated
+# cloud credentials, proxy credentials or package-index configuration to the probe.
+UPDATE_ENV_KEYS = {
+    "PATH",
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "SYSTEMROOT",
+    "WINDIR",
+    "USERPROFILE",
+    "APPDATA",
+    "LOCALAPPDATA",
+    "XDG_CACHE_HOME",
+    "XDG_DATA_HOME",
+    "LANG",
+    "LC_ALL",
+}
 PROBE = (
     "import json,sys; from flin_gmp_mcp import __version__; "
     "from flin_gmp_mcp.server import main; "
@@ -46,11 +66,7 @@ def runtime_command(uv: str, *, offline: bool) -> list[str]:
 
 def resolve_runtime(uv: str, *, offline: bool) -> tuple[str, str] | None:
     # Package resolution does not need Google credentials or inherited index settings.
-    env = {
-        key: value
-        for key, value in os.environ.items()
-        if not key.startswith(("GOOGLE_", "UV_", "PIP_", "PYTHON")) and key != "VIRTUAL_ENV"
-    }
+    env = {key: value for key, value in os.environ.items() if key in UPDATE_ENV_KEYS}
     try:
         completed = subprocess.run(
             runtime_command(uv, offline=offline),
@@ -77,7 +93,7 @@ def resolve_runtime(uv: str, *, offline: bool) -> tuple[str, str] | None:
 
 def main() -> None:
     uv = shutil.which("uv")
-    if os.environ.get("FLIN_GMP_AUTO_UPDATE", "true").lower() == "true" and uv:
+    if os.environ.get("FLIN_GMP_AUTO_UPDATE", "false").lower() == "true" and uv:
         for offline in (False, True):
             runtime = resolve_runtime(uv, offline=offline)
             if runtime is None:

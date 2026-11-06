@@ -97,7 +97,8 @@ def authenticate(account: str | None = None, force: bool = False) -> dict[str, A
     lower-case account alias such as work for a separate login. force=true replaces
     the selected account's saved sign-in only after a successful new authorization.
     Requests permissions for GOOGLE_GMP_SERVICES; some Google scopes also allow writes,
-    but this server only exposes read endpoints. Requires a browser on the server host.
+    but this server only exposes reads and DV360 report creation/runs.
+    Requires a browser on the server host.
     """
     get_credentials(account=account, interactive=True, force=force)
     return {"ok": True, "status": "authenticated", "account": account or "default"}

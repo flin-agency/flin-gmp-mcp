@@ -27,8 +27,9 @@ def token_info(settings):
 
 
 def write_token(settings, info=None):
-    settings.token_dir.mkdir(exist_ok=True)
+    settings.token_dir.mkdir(mode=0o700, exist_ok=True)
     settings.token_path.write_text(json.dumps(token_info(settings) if info is None else info))
+    settings.token_path.chmod(0o600)
 
 
 def test_defaults_and_selected_scopes(tmp_path):
@@ -108,8 +109,9 @@ def test_reject_wrong_client_or_scopes(settings, change):
 
 @pytest.mark.parametrize("bad", ["broken json", "[]", "null"])
 def test_corrupt_token(settings, bad):
-    settings.token_dir.mkdir()
+    settings.token_dir.mkdir(mode=0o700)
     settings.token_path.write_text(bad)
+    settings.token_path.chmod(0o600)
     assert auth.describe_auth_state(settings=settings)["status"] == "invalid_token_file"
     with pytest.raises(auth.AuthenticationError):
         auth.get_credentials(settings=settings)
@@ -232,4 +234,99 @@ def test_malformed_scope_list_has_actionable_status(settings):
     write_token(settings, {**token_info(settings), "scopes": [{"bad": "scope"}]})
     assert auth.describe_auth_state(settings=settings)["status"] == "oauth_required"
     with pytest.raises(auth.AuthenticationRequiredError):
+        auth.get_credentials(settings=settings)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permissions")
+@pytest.mark.parametrize("mode", [0o644, 0o660, 0o666])
+def test_reject_shared_token_permissions_before_credentials(settings, monkeypatch, mode):
+    write_token(settings)
+    settings.token_path.chmod(mode)
+    build = Mock()
+    monkeypatch.setattr(auth, "_build_credentials_from_info", build)
+    with pytest.raises(auth.AuthenticationError):
+        auth.get_credentials(settings=settings)
+    assert auth.describe_auth_state(settings=settings)["status"] == "invalid_token_file"
+    build.assert_not_called()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permissions")
+@pytest.mark.parametrize("mode", [0o755, 0o770, 0o777])
+def test_reject_shared_directory_on_read_and_write(settings, mode):
+    write_token(settings)
+    settings.token_dir.chmod(mode)
+    with pytest.raises(auth.AuthenticationError):
+        auth.get_credentials(settings=settings)
+    with pytest.raises(auth.AuthenticationError):
+        auth.save_credentials(Mock(to_json=lambda: "{}"), settings.token_path)
+    assert stat.S_IMODE(settings.token_dir.stat().st_mode) == mode
+
+
+def test_reject_symlinked_parent_directory_on_read(settings, tmp_path):
+    write_token(settings)
+    moved = tmp_path / "real-tokens"
+    settings.token_dir.rename(moved)
+    settings.token_dir.symlink_to(moved, target_is_directory=True)
+    with pytest.raises(auth.AuthenticationError):
+        auth.get_credentials(settings=settings)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX file descriptors")
+def test_token_symlink_swap_cannot_redirect_read(settings, tmp_path, monkeypatch):
+    write_token(settings)
+    target = tmp_path / "outside.json"
+    target.write_text(settings.token_path.read_text())
+    target.chmod(0o600)
+    real_open = os.open
+
+    def swapped_open(path, flags, *args, **kwargs):
+        if path == settings.token_path.name:
+            settings.token_path.unlink()
+            settings.token_path.symlink_to(target)
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(auth.os, "open", swapped_open)
+    with pytest.raises(auth.AuthenticationError):
+        auth.get_credentials(settings=settings)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX special files")
+@pytest.mark.parametrize("kind", ["fifo", "directory", "hardlink"])
+def test_token_must_be_regular_unshared_file(settings, tmp_path, kind):
+    write_token(settings)
+    if kind == "hardlink":
+        os.link(settings.token_path, tmp_path / "alias.json")
+    else:
+        settings.token_path.unlink()
+        if kind == "fifo":
+            os.mkfifo(settings.token_path, 0o600)
+        else:
+            settings.token_path.mkdir(mode=0o700)
+    with pytest.raises(auth.AuthenticationError):
+        auth.get_credentials(settings=settings)
+
+
+@pytest.mark.parametrize("content", [b"x" * (auth.MAX_TOKEN_BYTES + 1), b"\xff"])
+def test_oversized_or_non_text_tokens_are_rejected(settings, content):
+    write_token(settings)
+    settings.token_path.write_bytes(content)
+    with pytest.raises(auth.AuthenticationError):
+        auth.get_credentials(settings=settings)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX ownership")
+def test_token_owned_by_different_user_is_rejected(settings, monkeypatch):
+    write_token(settings)
+    real_fstat = os.fstat
+
+    def other_owner(fd):
+        result = real_fstat(fd)
+        if stat.S_ISREG(result.st_mode):
+            values = list(result)
+            values[4] = os.getuid() + 1
+            return os.stat_result(values)
+        return result
+
+    monkeypatch.setattr(auth.os, "fstat", other_owner)
+    with pytest.raises(auth.AuthenticationError):
         auth.get_credentials(settings=settings)
