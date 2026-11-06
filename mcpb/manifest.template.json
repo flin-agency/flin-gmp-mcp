@@ -85,8 +85,8 @@
     "auto_update": {
       "type": "boolean",
       "title": "Automatic server updates",
-      "description": "Optional: execute newer stable 0.x code from PyPI on startup. Leave disabled to use this release's reviewed server and locked dependencies. Restart the connector to apply changes.",
-      "default": false
+      "description": "Automatically load the latest stable 0.x server from PyPI when the connector starts. Restart Claude Desktop or the connector to apply updates; no new bundle installation is needed for server updates. Falls back to cached or bundled code when unavailable.",
+      "default": true
     }
   },
   "tools": [

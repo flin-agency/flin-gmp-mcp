@@ -73,8 +73,38 @@ jobs:
           name: python-dist
           path: dist
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
-  github-release:
+  verify-pypi-update:
     needs: [build, publish-pypi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: desktop-bundle
+          path: desktop-bundle
+      - run: uv sync --locked --extra dev
+      - name: Download an existing installed-extension baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download v0.1.4 --repo "$GITHUB_REPOSITORY" --pattern '*.mcpb' --dir previous-desktop-bundle
+      - name: Require current PyPI server from both new and older bundles
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if uv run python scripts/check_mcpb.py desktop-bundle/*.mcpb --auto-update --expected-version "${GITHUB_REF_NAME#v}" &&
+               uv run python scripts/check_mcpb.py previous-desktop-bundle/*.mcpb --auto-update --expected-version "${GITHUB_REF_NAME#v}"; then
+              exit 0
+            fi
+            sleep 15
+          done
+          exit 1
+  github-release:
+    needs: [build, verify-pypi-update]
     runs-on: ubuntu-latest
     permissions:
       contents: write

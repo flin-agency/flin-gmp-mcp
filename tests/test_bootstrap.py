@@ -27,7 +27,7 @@ def test_probe_refreshes_pypi_without_credentials(bootstrap, monkeypatch, tmp_pa
     monkeypatch.setenv("GH_TOKEN", "private-github-token")
     assert bootstrap.resolve_runtime("uv", offline=False) == (str(python), "0.9.0")
     command = run.call_args.args[0]
-    assert "--refresh-package" in command
+    assert "--upgrade-package" in command
     assert "https://pypi.org/simple" in command
     assert f"flin-gmp-mcp>={bootstrap.__version__},<1" in command
     assert "GOOGLE_CLIENT_SECRET" not in run.call_args.kwargs["env"]
@@ -79,14 +79,10 @@ def test_network_failure_uses_cache_then_bundle(bootstrap, monkeypatch, cached, 
     assert capsys.readouterr().out == ""
 
 
-@pytest.mark.parametrize("setting", [None, "false"])
-def test_disabled_updates_use_bundle_without_network(bootstrap, monkeypatch, setting):
+def test_disabled_updates_use_bundle_without_network(bootstrap, monkeypatch):
     from flin_gmp_mcp import server
 
-    if setting is None:
-        monkeypatch.delenv("FLIN_GMP_AUTO_UPDATE", raising=False)
-    else:
-        monkeypatch.setenv("FLIN_GMP_AUTO_UPDATE", setting)
+    monkeypatch.setenv("FLIN_GMP_AUTO_UPDATE", "false")
     resolve = Mock()
     monkeypatch.setattr(bootstrap, "resolve_runtime", resolve)
     fallback = Mock()
@@ -94,3 +90,25 @@ def test_disabled_updates_use_bundle_without_network(bootstrap, monkeypatch, set
     bootstrap.main()
     resolve.assert_not_called()
     fallback.assert_called_once()
+
+
+@pytest.mark.parametrize("setting", [None, "true", "True"])
+def test_default_updates_start_pypi_runtime(bootstrap, monkeypatch, setting):
+    from flin_gmp_mcp import server
+
+    if setting is None:
+        monkeypatch.delenv("FLIN_GMP_AUTO_UPDATE", raising=False)
+    else:
+        monkeypatch.setenv("FLIN_GMP_AUTO_UPDATE", setting)
+    monkeypatch.setattr(bootstrap.shutil, "which", lambda _: "/bin/uv")
+    resolve = Mock(return_value=("/updated/python", "0.9.0"))
+    monkeypatch.setattr(bootstrap, "resolve_runtime", resolve)
+    execute = Mock(side_effect=SystemExit(0))
+    monkeypatch.setattr(bootstrap.os, "execve", execute)
+    fallback = Mock()
+    monkeypatch.setattr(server, "main", fallback)
+    with pytest.raises(SystemExit):
+        bootstrap.main()
+    resolve.assert_called_once_with("/bin/uv", offline=False)
+    assert execute.call_args.args[0] == "/updated/python"
+    fallback.assert_not_called()

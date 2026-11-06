@@ -1,4 +1,4 @@
-# Security review — 0.1.4
+# Security review — 0.1.5 (including 0.1.4 hardening)
 
 Reviewed on 2026-11-06: runtime source, OAuth flow, local token storage, Google
 request boundaries, report downloads, desktop launcher, dependencies, bundle
@@ -20,29 +20,35 @@ not an independent penetration test or a guarantee of freedom from vulnerabiliti
   on macOS/Linux to reject symlink swaps. Reject non-regular files, hard links and
   files exceeding 64 KiB. Nonblocking opens reject FIFOs without hanging. Atomic
   writes retain `0600` without a subsequent path-based permission change.
-- **Desktop updates:** execute the included server by default. PyPI server updates
-  are opt-in and explicitly outside this release's reviewed version set. Existing
-  enabled settings can persist across upgrades; disable them to use the bundle.
-  The update probe receives an allowlist of OS environment settings rather than
-  all environment variables except known prefixes.
+- **Desktop updates:** automatic stable PyPI updates are enabled by default, as
+  explicitly required for this project. New compatible server releases load on
+  connector restart without reinstalling the bundle. The update probe still
+  receives only allowlisted OS environment settings. Explicit package upgrades
+  refresh cached metadata. Users can disable updates to pin bundled code.
+  Existing 0.1.4 installs need the setting enabled once. Release checks prove that
+  both the current and baseline 0.1.4 launchers run the exact new PyPI version;
+  falling back to bundled code fails the update check.
 - **Publication:** pin third-party Actions by full commit, disable persisted Git
   checkout credentials, audit hashed locked dependencies before publishing, and
   require real bundle startup on Apple Silicon and Intel macOS runners before
-  the PyPI/GitHub release jobs. PyPI uses short-lived OIDC authentication.
+  the PyPI/GitHub release jobs. A post-publication PyPI update check additionally
+  gates the GitHub release. PyPI uses short-lived OIDC authentication.
 
 ## Verification
 
-- 186 automated tests, including unsafe permission/ownership cases, a symlink-swap
-  regression, special files, token size bounds and opt-in updater behavior.
+- 193 automated tests, including unsafe permission/ownership cases, a symlink-swap
+  regression, special files, token size bounds, default updates and strict
+  update verification.
 - Ruff lint and format checks; Python wheel/source build and metadata validation.
 - pip-audit 2.10.1 against the installed development environment and hashed locked
   dependencies: no known vulnerabilities after remediation. GitHub reruns the
   audit at release time and attaches `dependency-audit.json`.
-- Gitleaks 8.30.1 across all five pre-release commits: no secrets detected.
+- The initial 0.1.4 review ran Gitleaks 8.30.1 across all five preceding commits
+  and the packaged bundle: no secrets detected.
 - Bandit static review: no high-severity findings. The SQL-string warning refers
   to the fixed SA360 query whose variable dates are parsed and round-trip validated;
   no raw query input is interpolated there. Low-severity subprocess warnings refer
-  to explicit argument arrays without a shell in the opt-in updater. Password
+  to explicit argument arrays without a shell in the updater. Password
   literal warnings are the public Google token URL and token-presence booleans.
 - Reproducible MCPB packaging from allowlisted files, schema validation, checksum,
   and actual stdio startup/tool discovery/health check without Google credentials.

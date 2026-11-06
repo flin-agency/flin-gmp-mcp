@@ -1,4 +1,4 @@
-"""Desktop bootstrap: audited bundle by default, with explicitly opt-in PyPI updates."""
+"""Desktop bootstrap: automatic stable PyPI updates, with local fallbacks."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ def runtime_command(uv: str, *, offline: bool) -> list[str]:
         "disallow",
         "--from",
         f"{PACKAGE}>={__version__},<1",
-        *(["--offline"] if offline else ["--refresh-package", PACKAGE]),
+        *(["--offline"] if offline else ["--upgrade-package", PACKAGE]),
         "python",
         "-I",
         "-c",
@@ -93,7 +93,7 @@ def resolve_runtime(uv: str, *, offline: bool) -> tuple[str, str] | None:
 
 def main() -> None:
     uv = shutil.which("uv")
-    if os.environ.get("FLIN_GMP_AUTO_UPDATE", "false").lower() == "true" and uv:
+    if os.environ.get("FLIN_GMP_AUTO_UPDATE", "true").lower() == "true" and uv:
         for offline in (False, True):
             runtime = resolve_runtime(uv, offline=offline)
             if runtime is None:

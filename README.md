@@ -83,16 +83,16 @@ replace a stale login or switch the selected account. No secrets are returned.
 ## Install from PyPI
 
 ```bash
-uvx flin-gmp-mcp@0.1.4
+uvx flin-gmp-mcp@0.1.5
 ```
 
-In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.4"]`
+In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.5"]`
 and the same Google environment variables shown above.
 
 ## macOS desktop installation
 
-Download `flin-gmp-mcp-0.1.4.mcpb` from the
-[v0.1.4 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.4)
+Download `flin-gmp-mcp-0.1.5.mcpb` from the
+[v0.1.5 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.5)
 and import it into Claude Desktop. The package includes the server and locked
 dependency definitions; the first launch needs internet access. Enter your own
 Google OAuth credentials in the extension settings.
@@ -212,14 +212,21 @@ Verified against Google's REST references and live discovery documents:
 
 MIT © flin GmbH.
 
-### Desktop updates
+### Automatic desktop server updates
 
-Bundle 0.1.4 starts its included server with locked dependencies by default.
-Install a newer `.mcpb` release to update. **Automatic server updates** remain an
-explicit option in extension settings: enabling them executes newer stable 0.x
-releases from PyPI at connector startup, outside this release's reviewed versions.
-Existing installations may retain their previous enabled setting; turn it off to
-use the reviewed bundle. `health_check.version` shows the running server version.
+Automatic server updates are enabled by default in bundle 0.1.5. At each connector
+start, the launcher loads the latest stable compatible 0.x server from PyPI.
+Restart Claude Desktop or the connector after a release; normal server updates do
+not require downloading or reinstalling the `.mcpb`. A running session is not
+hot-swapped. `health_check.version` reports the server actually running.
+
+If you installed 0.1.4, enable **Automatic server updates** once in extension
+settings, then restart. That existing bundle can load 0.1.5 and subsequent compatible
+PyPI releases without reinstallation. New installations use the latest `.mcpb`.
+
+Every release publishes both PyPI and a new GitHub desktop bundle. Before publishing
+the GitHub release, CI verifies that the new and baseline 0.1.4 bundles start the
+newly published PyPI server. A bundled fallback cannot pass this update check.
 See [desktop update details](docs/desktop-extension.md#server-updates) and the
 [security review](SECURITY.md).
 

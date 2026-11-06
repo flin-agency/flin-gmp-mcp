@@ -1,28 +1,29 @@
-## Security release 0.1.4 — Claude Desktop for macOS
+## Automatic desktop updates — 0.1.5
 
-Download **flin-gmp-mcp-0.1.4.mcpb** below and import it in Claude Desktop's extension
-settings. The same package supports Apple Silicon and Intel Macs. Enter your own
-Google Desktop OAuth client ID/secret, enable the Google products you use, then run
-`health_check` and `authenticate`. First launch needs internet for Python/dependencies.
+**Automatic server updates are enabled by default again.** Restart Claude Desktop
+or the connector after a release to load the latest compatible stable server from
+PyPI. Normal server updates do not require reinstalling the `.mcpb`.
 
-- Updated OAuthLib and pytest to versions without the known advisories found by
-  the dependency scan; future releases now require a passing dependency audit.
-- Hardened token reads against shared permissions, incorrect ownership, symlink
-  swaps, hard links, special files and oversized input.
-- Automatic server updates are **off by default**, so the package starts its
-  included server with locked dependencies. Existing settings may persist: disable
-  **Automatic server updates** explicitly if it was enabled before upgrading.
-- Update probes no longer inherit unrelated cloud secrets from the environment.
-- GitHub publication uses pinned Actions and requires bundle startup checks on
-  both Apple Silicon and Intel macOS runners.
+Already installed 0.1.4? Enable **Automatic server updates** once in its settings,
+then restart. The existing bundle can load this and future compatible server
+releases directly from PyPI. No new bundle installation is needed for this change.
 
-All 32 tools remain available, including DV360 report creation and CSV reads.
-Campaign settings cannot be changed. Google OAuth scopes can still grant broader
-permissions; enable only products you need.
+For new installations, download **flin-gmp-mcp-0.1.5.mcpb** below. Every server
+release continues to publish **both PyPI and a new Claude Desktop bundle**.
 
-Validation: 186 tests, lint/format, Python package and reproducible MCPB checks,
-real MCP startup and dependency/secret scans. See **SECURITY-REVIEW.md** and
-**dependency-audit.json** below for scope, findings and limits.
+- Explicit package upgrades refresh cached PyPI metadata on startup.
+- New post-publication checks require the new and baseline 0.1.4 bundles to start
+  the exact newly published PyPI version before the GitHub release is published.
+- A bundled fallback or old cached version cannot pass the update check.
+- `health_check` reports the running server version even before Google setup.
+- Token-storage hardening, updater environment isolation, dependency auditing,
+  pinned Actions and Apple Silicon/Intel startup checks remain in place.
 
-The bundle is unsigned and includes **SHA256SUMS**. Interactive Claude Desktop
-installation and live authenticated Google product behavior have not been tested.
+Validation: 193 tests, Python package checks and real MCP bundle startup. The release
+also requires live PyPI update checks for new and older bundles. All 32 tools remain
+available. Updates happen on restart, not during a running session. Major version
+1.x or changes to the launcher/manifest/permissions can require a new bundle.
+
+The bundle is unsigned; **SHA256SUMS**, **SECURITY-REVIEW.md** and
+**dependency-audit.json** accompany it. Live authenticated Google product behavior
+and interactive Claude Desktop installation have not been tested.

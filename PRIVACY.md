@@ -16,12 +16,12 @@ telemetry, analytics, or advertising tracking.
   into memory and returns its records; the MCP does not save the file locally.
 - Requested account, campaign and report data is returned to your MCP client.
   That client's data policies apply to its use of the results.
-- Starting the desktop extension uses the bundled server by default. If you enable
-  automatic server updates, it checks PyPI on startup. Package downloads use PyPI
-  and its file hosts through uv. The update probe receives only allowlisted
-  operating-system environment settings, excluding Google and other cloud secrets.
-  This does not restrict its filesystem access. Existing extension settings may persist
-  across upgrades; disable automatic updates to stay on the reviewed bundle.
+- Starting the desktop extension checks PyPI for stable compatible server updates
+  by default. Package downloads use PyPI and its file hosts through uv. The update
+  probe receives only allowlisted operating-system environment settings, excluding
+  Google and other cloud secrets. This does not restrict its filesystem access.
+  Updates execute newly published server code; they can be disabled in extension
+  settings. Existing 0.1.4 installations need the setting enabled once.
 - Installing the desktop bundle may download Python and locked dependencies
   through uv. These downloads do not contain your Google tokens or report data.
 - Delete local token files to remove saved sign-ins; revoke the application's

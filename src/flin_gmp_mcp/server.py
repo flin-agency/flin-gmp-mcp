@@ -77,7 +77,12 @@ def health_check(account: str | None = None) -> dict[str, Any]:
     """
     missing = missing_required_env_vars()
     if missing:
-        return {"ok": False, "status": "missing_configuration", "missing_env_vars": missing}
+        return {
+            "ok": False,
+            "version": __version__,
+            "status": "missing_configuration",
+            "missing_env_vars": missing,
+        }
     settings = load_settings()
     state = describe_auth_state(settings=settings, account=account)
     return {

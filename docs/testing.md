@@ -71,21 +71,26 @@ not the ability to download a real backup image.
 
 ## Desktop updater
 
-`tests/test_bootstrap.py` covers refresh arguments, credential-free resolution,
+`tests/test_bootstrap.py` covers explicit package upgrades, environment isolation,
 rejected downgrades/prereleases/major upgrades, timeouts, cached and bundled fallback,
-stdout hygiene and disabling updates. The regular bundle smoke test disables updates
-so CI verifies the code being released, not a previously published server.
+stdout hygiene, default enabled updates and explicit disabling. The regular bundle
+smoke test disables updates so pre-publication CI verifies the code being released.
 
-After PyPI publication, run:
+After PyPI publication, the release workflow runs:
 
 ```bash
-uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.4.mcpb --auto-update
+uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.5.mcpb --auto-update --expected-version 0.1.5
 ```
 
-Check stderr for `starting PyPI runtime 0.1.4` (or a newer stable 0.x version),
-not just successful tool discovery: a working bundled fallback alone does not prove
-that the PyPI update succeeded. The same real MCP handshake validates the selected
-runtime's tools. An update only takes effect when the connector restarts.
+It also downloads the original v0.1.4 `.mcpb` and performs the same update check
+against it, expecting the new server version. The checker requires matching
+`health_check.version` and `starting PyPI runtime` diagnostics, as well as the real
+MCP handshake and tools. A working old/bundled fallback fails this check. Regression
+tests cover those false-success cases. Publication uses bounded retries for PyPI
+index propagation. The GitHub release is gated on both update checks.
+
+An update takes effect when the connector restarts. No Google credentials or live
+account access are needed for these checks.
 
 ## DV360 report writes and CSV reads
 

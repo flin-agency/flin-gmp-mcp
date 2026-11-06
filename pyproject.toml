@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "flin-gmp-mcp"
-version = "0.1.4"
+version = "0.1.5"
 description = "Google Marketing Platform MCP: campaign reads, DV360 reports, CM360 and SA360."
 readme = "README.md"
 requires-python = ">=3.10"
