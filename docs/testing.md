@@ -10,12 +10,12 @@ uv run pytest
 uv build
 uv run twine check dist/*.whl dist/*.tar.gz
 uv run python scripts/build_mcpb.py
-uv run python scripts/check_mcpb.py dist/mcpb/*.mcpb
+uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp.mcpb
 ```
 
 The automated suite exercises configuration, isolated named accounts, OAuth
 scope/client changes, token expiry and refresh, atomic private token storage,
-read-only endpoint enforcement, pagination/filter mapping, date validation,
+campaign-protection/report-write allowlisting, pagination/filter mapping, date validation,
 response-size bounds, sanitized errors, MCP annotations and input schemas.
 A real stdio subprocess is initialized and queried without Google credentials.
 Regression tests also hold Google requests open across repeated calls and verify
@@ -71,7 +71,7 @@ not the ability to download a real backup image.
 
 ## Desktop updater
 
-`tests/test_bootstrap.py` covers explicit package upgrades, environment isolation,
+`tests/test_bootstrap.py` covers package-cache refreshes, environment isolation,
 rejected downgrades/prereleases/major upgrades, timeouts, cached and bundled fallback,
 stdout hygiene, default enabled updates and explicit disabling. The regular bundle
 smoke test disables updates so pre-publication CI verifies the code being released.
@@ -79,7 +79,7 @@ smoke test disables updates so pre-publication CI verifies the code being releas
 After PyPI publication, the release workflow runs:
 
 ```bash
-uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.5.mcpb --auto-update --expected-version 0.1.5
+uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp.mcpb --auto-update --preserve-settings --expected-version 0.1.6
 ```
 
 It also downloads the original v0.1.4 `.mcpb` and performs the same update check
@@ -103,3 +103,29 @@ Live verification (not performed by the automated suite): create a STANDARD CSV
 query for a test advertiser, run it, check status until DONE, and compare the CSV
 records with DV360. Reuse that query for another date range and confirm that no
 campaign settings change. Creation leaves a saved query in the Google account.
+
+## Common status, compatibility and settings retention
+
+`connection_status` checks only local configuration/token metadata; the unit tests
+block browser, API and token-refresh helpers. Stored valid or refreshable tokens
+report `auth_status=unknown`, never authenticated/live success. Existing health fields
+remain and `server_version` is additive. Tests cover malformed configuration and
+safe runtime/fallback diagnostics without credential or customer-data disclosure.
+
+The current starter's compatibility range is stable 0.1.x at or above the bundled
+version, not all pre-1.0 interfaces. Rejection tests include 0.2, 0.9, 1.x,
+pre-releases and downgrades. Real bundle checks exercise Python 3.12, the existing
+stdio entry point, OAuth environment fields, token layout and old tool discovery.
+
+`--preserve-settings` uses synthetic OAuth configuration and a private synthetic
+token. It starts the same extracted extension twice, checks the selected service,
+local token state and running version, and requires unchanged token bytes. It never
+opens a browser or contacts Google. The release workflow runs this against both
+the new and original v0.1.4 bundles after PyPI publication. This tests launcher
+settings/token preservation, not Claude's interactive settings UI.
+
+Release checks distinguish Linux package tests, native Apple Silicon/macOS bundle
+startup, Intel/macOS bundle startup, and live PyPI update checks. None is an actual
+customer-account consent/API test; those remain the separately documented manual
+procedure above. The builder checks both the stable alias and versioned package
+are identical and includes both names in `SHA256SUMS`.

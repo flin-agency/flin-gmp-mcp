@@ -28,7 +28,7 @@ jobs:
           uv export --locked --extra dev --no-emit-project --format requirements-txt --output-file "$RUNNER_TEMP/audit-requirements.txt" > /dev/null
           uvx pip-audit==2.10.1 --requirement "$RUNNER_TEMP/audit-requirements.txt" --no-deps --disable-pip --require-hashes --format json --output dist/mcpb/dependency-audit.json
           cp SECURITY.md dist/mcpb/SECURITY-REVIEW.md
-      - run: uv run python scripts/check_mcpb.py dist/mcpb/*.mcpb
+      - run: uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp.mcpb
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: python-dist
@@ -58,7 +58,7 @@ jobs:
           name: desktop-bundle
           path: desktop-bundle
       - run: uv sync --locked --extra dev
-      - run: uv run python scripts/check_mcpb.py desktop-bundle/*.mcpb
+      - run: uv run python scripts/check_mcpb.py desktop-bundle/flin-gmp-mcp.mcpb
   publish-pypi:
     needs: [build, desktop-verify]
     runs-on: ubuntu-latest
@@ -96,8 +96,8 @@ jobs:
       - name: Require current PyPI server from both new and older bundles
         run: |
           for attempt in 1 2 3 4 5; do
-            if uv run python scripts/check_mcpb.py desktop-bundle/*.mcpb --auto-update --expected-version "${GITHUB_REF_NAME#v}" &&
-               uv run python scripts/check_mcpb.py previous-desktop-bundle/*.mcpb --auto-update --expected-version "${GITHUB_REF_NAME#v}"; then
+            if uv run python scripts/check_mcpb.py desktop-bundle/flin-gmp-mcp.mcpb --auto-update --preserve-settings --expected-version "${GITHUB_REF_NAME#v}" &&
+               uv run python scripts/check_mcpb.py previous-desktop-bundle/*.mcpb --auto-update --preserve-settings --expected-version "${GITHUB_REF_NAME#v}"; then
               exit 0
             fi
             sleep 15

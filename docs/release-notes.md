@@ -1,29 +1,33 @@
-## Automatic desktop updates — 0.1.5
+## 0.1.6 — consistent desktop setup and connection status
 
-**Automatic server updates are enabled by default again.** Restart Claude Desktop
-or the connector after a release to load the latest compatible stable server from
-PyPI. Normal server updates do not require reinstalling the `.mcpb`.
+Download **flin-gmp-mcp.mcpb** (stable name) or **flin-gmp-mcp-0.1.6.mcpb** below.
+Both are identical and listed in **SHA256SUMS**. The extension ID is unchanged.
+The README starts with Claude Desktop on Apple Silicon: download, install, enter
+administrator/password-manager settings, Google sign-in and a product-specific read.
+Intel support and developer installation remain available.
 
-Already installed 0.1.4? Enable **Automatic server updates** once in its settings,
-then restart. The existing bundle can load this and future compatible server
-releases directly from PyPI. No new bundle installation is needed for this change.
+- New `connection_status`: running `server_version`, local configuration, cautious
+  auth status, `live_access=not_checked` and a concrete next step. It makes no Google
+  request, refreshes no token and opens no browser. A local token is not live proof.
+- `health_check.version` remains; `server_version` and launcher diagnostics are additive.
+- The new starter reports extension version, PyPI/cache/bundled source and fallback.
+  Automatic updates remain enabled. The tested range is stable 0.1.x, not future
+  0.2/1.x interfaces. Existing cache and bundled fallbacks remain available.
+- Both new and original 0.1.4 bundles must start the new public PyPI server and retain
+  synthetic saved settings/token bytes across two starts before GitHub publication.
+- Short root privacy/security/support pages link detailed guidance. Token JSON is
+  unencrypted private local storage; removing the extension alone may leave it behind.
 
-For new installations, download **flin-gmp-mcp-0.1.5.mcpb** below. Every server
-release continues to publish **both PyPI and a new Claude Desktop bundle**.
+**Existing installations:** compatible server updates deliver the new status tool
+on restart. Import this package once for the new starter's visible fallback markers
+and tighter compatibility bound. A 0.1.4 install needs automatic updates enabled
+once. Normal later compatible server updates do not require another import.
 
-- Explicit package upgrades refresh cached PyPI metadata on startup.
-- New post-publication checks require the new and baseline 0.1.4 bundles to start
-  the exact newly published PyPI version before the GitHub release is published.
-- A bundled fallback or old cached version cannot pass the update check.
-- `health_check` reports the running server version even before Google setup.
-- Token-storage hardening, updater environment isolation, dependency auditing,
-  pinned Actions and Apple Silicon/Intel startup checks remain in place.
+Validation: 207 automated tests; lint/format, manifest/reproducible package and Python
+metadata checks. Release gates require built-package startup outside the source tree
+on Linux, Apple Silicon and Intel, plus live PyPI update/settings-retention checks.
+These are not an interactive Claude installation or a real Google customer-account test.
 
-Validation: 193 tests, Python package checks and real MCP bundle startup. The release
-also requires live PyPI update checks for new and older bundles. All 32 tools remain
-available. Updates happen on restart, not during a running session. Major version
-1.x or changes to the launcher/manifest/permissions can require a new bundle.
-
-The bundle is unsigned; **SHA256SUMS**, **SECURITY-REVIEW.md** and
-**dependency-audit.json** accompany it. Live authenticated Google product behavior
-and interactive Claude Desktop installation have not been tested.
+DV360 report creation/execution saves resources at Google; campaigns, budgets and
+targeting are unchanged. CM360 exposes metadata/existing report links; SA360 returns
+performance rows directly. The package remains unsigned.

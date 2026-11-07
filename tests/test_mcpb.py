@@ -128,7 +128,10 @@ def test_bundle_is_valid_reproducible_zip(bundle_source: Path, tmp_path: Path) -
     second = build_bundle(bundle_source, tmp_path / "two")
     assert first.read_bytes() == second.read_bytes()
     checksum = hashlib.sha256(first.read_bytes()).hexdigest()
-    assert (first.parent / "SHA256SUMS").read_text() == f"{checksum}  {first.name}\n"
+    assert (first.parent / "SHA256SUMS").read_text() == (
+        f"{checksum}  {first.name}\n{checksum}  flin-gmp-mcp.mcpb\n"
+    )
+    assert (first.parent / "flin-gmp-mcp.mcpb").read_bytes() == first.read_bytes()
     with zipfile.ZipFile(first) as archive:
         assert archive.testzip() is None
         assert "manifest.json" in archive.namelist()

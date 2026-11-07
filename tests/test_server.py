@@ -178,13 +178,13 @@ def test_invalid_dates_never_reach_google(recorded, start, end):
 
 async def test_schema_annotations_and_validation(recorded):
     tools = await server.mcp.list_tools()
-    assert len(tools) == 32
+    assert len(tools) == 33
     for tool in tools:
         assert tool.annotations.readOnlyHint is (
             tool.name not in {"authenticate", "create_dv360_report_query", "run_dv360_report"}
         )
         assert tool.annotations.destructiveHint is False
-        if tool.name == "health_check":
+        if tool.name in {"health_check", "connection_status"}:
             assert tool.annotations.openWorldHint is False
     with pytest.raises(ToolError):
         await server.mcp.call_tool("list_cm360_reports", {"profile_id": "1", "scope": "INVALID"})
@@ -233,7 +233,7 @@ async def test_stdio_handshake_and_missing_config_without_google():
         init = await session.initialize()
         assert init.serverInfo.name == "flin-gmp-mcp"
         listed = await session.list_tools()
-        assert len(listed.tools) == 32
+        assert len(listed.tools) == 33
         health = await session.call_tool("health_check", {})
         assert not health.isError
         assert "missing_configuration" in health.content[0].text

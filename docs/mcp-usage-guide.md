@@ -4,6 +4,7 @@ All data tools accept optional `account`. Call `authenticate` once before readin
 
 | Tool | Purpose |
 | --- | --- |
+| `connection_status` | Local configuration, actual server version and update source; no live access check. |
 | `health_check` | Check local configuration and token status. No Google request or browser launch. |
 | `authenticate` | Sign in via the local browser and store credentials privately; never returns tokens. |
 | `list_organizations` | List accessible GMP organizations (one page, max 1000); not Google Cloud organizations. |

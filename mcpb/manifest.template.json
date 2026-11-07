@@ -85,11 +85,15 @@
     "auto_update": {
       "type": "boolean",
       "title": "Automatic server updates",
-      "description": "Automatically load the latest stable 0.x server from PyPI when the connector starts. Restart Claude Desktop or the connector to apply updates; no new bundle installation is needed for server updates. Falls back to cached or bundled code when unavailable.",
+      "description": "Automatically load the latest stable 0.1.x server from PyPI when the connector starts. Restart Claude Desktop or the connector to apply updates; no new bundle installation is needed for server updates. Falls back to cached or bundled code when unavailable.",
       "default": true
     }
   },
   "tools": [
+    {
+      "name": "connection_status",
+      "description": "Check local setup, server version and update fallback; no Google request or browser."
+    },
     {
       "name": "health_check",
       "description": "Check local configuration and token status. No Google request or browser launch."

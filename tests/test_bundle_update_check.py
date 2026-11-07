@@ -55,3 +55,13 @@ def test_bundled_check_still_works_before_pypi_publication():
         )
         == "0.1.5"
     )
+
+
+def test_cached_fallback_cannot_pass_online_release_verification():
+    with pytest.raises(RuntimeError, match="fallback"):
+        validate_runtime(
+            {"version": "0.1.6", "fallback_active": True},
+            "flin-gmp-mcp: starting PyPI runtime 0.1.6\n",
+            auto_update=True,
+            expected_version="0.1.6",
+        )

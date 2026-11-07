@@ -16,3 +16,9 @@ Require the expected running server version and the PyPI launch diagnostic;
 successfully starting an old bundled fallback does not prove an update worked.
 Launcher, manifest or permission changes can still require a bundle update; state
 that limit accurately. Existing v0.1.4 installs need automatic updates enabled once.
+
+Keep the public README desktop-first and link an existing stable download alias.
+Preserve legacy health fields; connection_status must stay local, secret-free and
+honest about unknown authentication and untested live access. New desktop launchers
+currently accept stable 0.1.x only; reassess Python/stdio/config/token/tool interfaces
+before widening that range. Publish both alias and versioned bundles with checksums.

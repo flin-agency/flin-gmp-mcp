@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import re
 from datetime import date
 from functools import wraps
 from typing import Any, Literal
@@ -12,7 +14,7 @@ from mcp.types import ToolAnnotations
 from . import __version__
 from .auth import describe_auth_state, get_credentials
 from .client import error_message, numeric_id, organization_id, page_params, request, validate_query
-from .config import load_settings, missing_required_env_vars
+from .config import ConfigurationError, load_settings, missing_required_env_vars
 from .reporting import data_range, query_body, read_report
 
 mcp = FastMCP(
@@ -69,6 +71,73 @@ def result(service: str, path: str, *, account: str | None = None, **kwargs) -> 
     }
 
 
+def runtime_status() -> dict[str, Any]:
+    """Non-sensitive launcher diagnostics; older launchers report unknown provenance."""
+    extension = os.environ.get("FLIN_GMP_EXTENSION_VERSION", "")
+    source = os.environ.get("FLIN_GMP_RUNTIME_SOURCE", "unknown")
+    update = os.environ.get("FLIN_GMP_UPDATE_STATUS", "unknown")
+    if source not in {"pypi", "cache", "bundled"}:
+        source = "unknown"
+    if update not in {"updated", "cached_fallback", "bundled_fallback", "disabled"}:
+        update = "unknown"
+    return {
+        "server_version": __version__,
+        "extension_version": extension if re.fullmatch(r"\d+\.\d+\.\d+", extension) else None,
+        "runtime_source": source,
+        "update_status": update,
+        "fallback_active": None if update == "unknown" else update.endswith("_fallback"),
+    }
+
+
+@tool(local=True)
+def connection_status(account: str | None = None) -> dict[str, Any]:
+    """Check local setup, version and update source without network, refresh or browser.
+
+    A stored token is not proof of current Google access: auth_status stays unknown
+    until an actual authentication/access check. This local tool always reports
+    live_access=not_checked and returns no credentials or customer data.
+    """
+    status = {
+        **runtime_status(),
+        "configuration_status": "incomplete",
+        "auth_status": "unknown",
+        "live_access": "not_checked",
+        "next_step": "Enter the Google OAuth client ID and secret in extension settings.",
+    }
+    try:
+        settings = load_settings()
+    except ConfigurationError:
+        status["next_step"] = (
+            "Check the OAuth client ID/secret, enabled products and local configuration."
+        )
+        return status
+    status["configuration_status"] = "configured"
+    status["enabled_services"] = list(settings.services)
+    try:
+        state = describe_auth_state(settings=settings, account=account)
+    except (OSError, ConfigurationError):
+        status["next_step"] = "Check the account alias and private token directory permissions."
+        return status
+    if state["status"] == "oauth_required":
+        status["auth_status"] = "unauthenticated"
+        status["next_step"] = "Run authenticate and complete Google sign-in in your browser."
+    elif state["status"] == "invalid_token_file":
+        status["next_step"] = (
+            "Check private token storage or remove the token and authenticate again."
+        )
+    else:
+        discovery = {
+            "admin": "list_organizations(page_size=1)",
+            "dv360": "list_dv360_partners(page_size=1)",
+            "cm360": "list_cm360_profiles",
+            "sa360": "list_sa360_customers",
+        }
+        status["next_step"] = (
+            f"Run {discovery[settings.services[0]]} to verify live access for that product."
+        )
+    return status
+
+
 @tool(local=True)
 def health_check(account: str | None = None) -> dict[str, Any]:
     """Check local configuration and token status. No Google request or browser launch.
@@ -80,6 +149,7 @@ def health_check(account: str | None = None) -> dict[str, Any]:
         return {
             "ok": False,
             "version": __version__,
+            **runtime_status(),
             "status": "missing_configuration",
             "missing_env_vars": missing,
         }
@@ -88,6 +158,7 @@ def health_check(account: str | None = None) -> dict[str, Any]:
     return {
         "ok": state["status"] in {"ready", "refreshable"},
         "version": __version__,
+        **runtime_status(),
         "services": list(settings.services),
         "account": account or "default",
         **state,

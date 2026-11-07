@@ -5,7 +5,8 @@ telemetry, analytics, or advertising tracking.
 
 - OAuth client settings come from your MCP client's configuration.
 - Browser authentication communicates with Google. Access and refresh tokens are
-  stored in a private local directory, described in the README. They are never
+  stored as **unencrypted JSON files** in a private local directory, described in
+  the README. Claude protects its own sensitive settings separately. Tokens are never
   returned by MCP tools or included in the desktop bundle.
 - Data requests go to Google's Marketing Platform Admin, Display & Video 360,
   Bid Manager, Campaign Manager 360 and Search Ads 360 APIs, as enabled by you.
@@ -24,8 +25,14 @@ telemetry, analytics, or advertising tracking.
   settings. Existing 0.1.4 installations need the setting enabled once.
 - Installing the desktop bundle may download Python and locked dependencies
   through uv. These downloads do not contain your Google tokens or report data.
-- Delete local token files to remove saved sign-ins; revoke the application's
-  access in your Google account to invalidate its authorization.
+- To disconnect: stop/remove the extension, remove its saved client settings in
+  Claude, delete the relevant token file(s) and revoke the application's access in
+  your Google account. Removing the extension alone may leave token files behind.
+  The default Mac directory is `~/Library/Application Support/flin-gmp-mcp/`;
+  `GOOGLE_GMP_TOKEN_DIR` can override it. `default.json` and `<account>.json` store
+  separate sign-ins. Remove only this MCP's files. Other platform paths are in the README.
+- `connection_status` reads local setup only: it sends no Google request, refreshes
+  no token and starts no browser. A saved token is not proof of live Google access.
 
 Contact: flin@flin.agency. Google's processing is governed by
 [Google's privacy policy](https://policies.google.com/privacy).

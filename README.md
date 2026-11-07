@@ -1,8 +1,46 @@
-# flin-gmp-mcp
+# flin Google Marketing Platform MCP
 
-MCP server for **Google Marketing Platform** with campaign read access and DV360 report creation, built like the other
-[flin MCPs](https://github.com/flin-agency): Python, FastMCP, `uv`, browser OAuth,
-private local tokens, and stdio transport.
+Use Google Marketing Platform data in Claude Desktop: DV360 campaigns and reports,
+CM360 metadata/report links, and SA360 performance. DV360 report creation and runs
+save resources at Google; campaigns, budgets and targeting are not changed.
+
+## Start in Claude Desktop on a Mac
+
+For Apple Silicon (M1 or newer), use a current Claude Desktop supporting uv-based
+extensions. The same package also supports Intel Macs. No developer tools or local
+Git checkout are needed; the first launch needs internet access.
+
+1. **Download** the [standard Claude Desktop package](https://github.com/flin-agency/flin-gmp-mcp/releases/latest/download/flin-gmp-mcp.mcpb).
+   [Versioned downloads and checksums](https://github.com/flin-agency/flin-gmp-mcp/releases/latest) remain available.
+2. **Install** the `.mcpb` through Claude Desktop's extension settings.
+3. **Enter the settings** supplied by your administrator or password manager:
+   **Google OAuth Client ID** and **Google OAuth Client Secret** (Desktop app client).
+   Under **Enabled products**, select the products you use: `admin,dv360,cm360,sa360`.
+   Keep **Automatic server updates** enabled. The administrator must enable the
+   corresponding Google APIs; your Google account needs access to those products.
+4. **Sign in:** ask Claude to run `connection_status`, then `authenticate`, and
+   complete Google consent in the browser. Data/status tools never open a browser.
+5. **Test access:** run one matching discovery tool below. This is a small API read,
+   not report creation. An empty successful response is possible; check access to
+   the intended product/account separately. `connection_status` itself only checks
+   local setup and always reports `live_access: not_checked`.
+
+| Enabled product | Concrete access test |
+| --- | --- |
+| GMP Admin | `list_organizations(page_size=1)` |
+| DV360 | `list_dv360_partners(page_size=1)` |
+| CM360 | `list_cm360_profiles` |
+| SA360 | `list_sa360_customers` |
+
+The extension version identifies the installed starter. `connection_status.server_version`
+identifies the server actually running. Compatible stable server updates load at
+restart without interrupting a session or replacing saved settings. Cached/bundled
+fallbacks are visible with the new starter; see [updates and compatibility](docs/desktop-extension.md#server-updates).
+An older starter can require one new package import for those diagnostics or a
+changed UI; the server update alone does not replace the starter. A 0.1.4 install
+needs **Automatic server updates** enabled once.
+
+[Privacy](PRIVACY.md) · [Security](SECURITY.md) · [Help and removal](SUPPORT.md)
 
 ## Supported products
 
@@ -24,7 +62,7 @@ CM360 reports still return existing metadata and URLs only. SA360 returns perfor
 DV360 uses v4; v5 was still labelled beta in Google's documentation when this
 implementation was verified on 2026-10-30.
 
-## Quickstart from this repository
+## Developer installation from this repository
 
 Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/).
 
@@ -83,22 +121,11 @@ replace a stale login or switch the selected account. No secrets are returned.
 ## Install from PyPI
 
 ```bash
-uvx flin-gmp-mcp@0.1.5
+uvx flin-gmp-mcp@latest
 ```
 
-In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@0.1.5"]`
+In an MCP client, use `command: "uvx"` with `args: ["flin-gmp-mcp@latest"]`
 and the same Google environment variables shown above.
-
-## macOS desktop installation
-
-Download `flin-gmp-mcp-0.1.5.mcpb` from the
-[v0.1.5 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.5)
-and import it into Claude Desktop. The package includes the server and locked
-dependency definitions; the first launch needs internet access. Enter your own
-Google OAuth credentials in the extension settings.
-
-See [macOS instructions](docs/desktop-extension.md), [privacy](PRIVACY.md) and
-[support](SUPPORT.md). The bundle is unsigned and accompanied by a SHA-256 checksum.
 
 ## Configuration
 
@@ -214,21 +241,17 @@ MIT © flin GmbH.
 
 ### Automatic desktop server updates
 
-Automatic server updates are enabled by default in bundle 0.1.5. At each connector
-start, the launcher loads the latest stable compatible 0.x server from PyPI.
-Restart Claude Desktop or the connector after a release; normal server updates do
-not require downloading or reinstalling the `.mcpb`. A running session is not
-hot-swapped. `health_check.version` reports the server actually running.
+The standard extension enables automatic PyPI updates at restart. The current
+starter accepts stable 0.1.x releases at or above its bundled version. The boundary
+covers the existing Python 3.12/stdio entry point, OAuth configuration, token format
+and tool interfaces. Future 0.2/1.x interfaces are not presumed compatible. Every
+release verifies the current and original 0.1.4 bundles against the new PyPI server,
+including synthetic saved settings and tokens across two starts.
 
-If you installed 0.1.4, enable **Automatic server updates** once in extension
-settings, then restart. That existing bundle can load 0.1.5 and subsequent compatible
-PyPI releases without reinstallation. New installations use the latest `.mcpb`.
-
-Every release publishes both PyPI and a new GitHub desktop bundle. Before publishing
-the GitHub release, CI verifies that the new and baseline 0.1.4 bundles start the
-newly published PyPI server. A bundled fallback cannot pass this update check.
-See [desktop update details](docs/desktop-extension.md#server-updates) and the
-[security review](SECURITY.md).
+`connection_status` and `health_check` expose `server_version`; `health_check.version`
+remains supported. New starters also report `extension_version`, `runtime_source`,
+`update_status` and `fallback_active`. Old starters report unknown provenance; no
+fallback claim is inferred from a version number. See [update details](docs/desktop-extension.md#server-updates).
 
 ### DV360 performance without a manually prepared report
 

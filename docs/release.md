@@ -1,7 +1,7 @@
 # Release checklist
 
 Every server release must publish the Python package to PyPI **and** a newly built
-macOS desktop bundle and SHA-256 checksum to GitHub. Automatic PyPI updates in the
+macOS desktop bundle (versioned plus `flin-gmp-mcp.mcpb` alias) and SHA-256 checksums to GitHub. Automatic PyPI updates in the
 extension stay enabled by default. Branch pushes only run CI; finish a release by
 pushing the matching version tag.
 
@@ -23,7 +23,8 @@ pushing the matching version tag.
    then publishes using OIDC without a stored PyPI token.
 6. After publishing to PyPI, the workflow verifies the exact new server version
    through both the current bundle and the baseline v0.1.4 bundle with updates
-   enabled. Cached/bundled fallbacks cannot pass this check. Allow bounded retries
+   enabled. Run `--preserve-settings` to check synthetic settings and token bytes
+   over two starts. Cached/bundled fallbacks cannot pass this check. Allow bounded retries
    for PyPI index propagation. Only then publish the GitHub release.
 7. Verify the public download and checksum. Report that ordinary server updates
    require a connector restart, not a new bundle installation. Version 0.1.4 users

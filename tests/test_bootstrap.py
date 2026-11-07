@@ -19,17 +19,17 @@ def bootstrap():
 def test_probe_refreshes_pypi_without_credentials(bootstrap, monkeypatch, tmp_path):
     python = tmp_path / "python"
     python.touch()
-    run = Mock(return_value=Mock(stdout=json.dumps({"python": str(python), "version": "0.9.0"})))
+    run = Mock(return_value=Mock(stdout=json.dumps({"python": str(python), "version": "0.1.999"})))
     monkeypatch.setattr(bootstrap.subprocess, "run", run)
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
     monkeypatch.setenv("UV_INDEX", "https://other.invalid")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "private-cloud-key")
     monkeypatch.setenv("GH_TOKEN", "private-github-token")
-    assert bootstrap.resolve_runtime("uv", offline=False) == (str(python), "0.9.0")
+    assert bootstrap.resolve_runtime("uv", offline=False) == (str(python), "0.1.999")
     command = run.call_args.args[0]
-    assert "--upgrade-package" in command
+    assert "--refresh-package" in command
     assert "https://pypi.org/simple" in command
-    assert f"flin-gmp-mcp>={bootstrap.__version__},<1" in command
+    assert f"flin-gmp-mcp>={bootstrap.__version__},<0.2" in command
     assert "GOOGLE_CLIENT_SECRET" not in run.call_args.kwargs["env"]
     assert "UV_INDEX" not in run.call_args.kwargs["env"]
     assert "AWS_SECRET_ACCESS_KEY" not in run.call_args.kwargs["env"]
@@ -37,7 +37,9 @@ def test_probe_refreshes_pypi_without_credentials(bootstrap, monkeypatch, tmp_pa
     assert run.call_args.kwargs["timeout"] == 30
 
 
-@pytest.mark.parametrize("version", ["0.0.1", "1.0.0", "0.2.0rc1", "not-a-version"])
+@pytest.mark.parametrize(
+    "version", ["0.0.1", "0.2.0", "0.9.0", "1.0.0", "0.1.99rc1", "not-a-version"]
+)
 def test_probe_rejects_downgrade_major_and_prerelease(bootstrap, monkeypatch, version):
     monkeypatch.setattr(
         bootstrap.subprocess,
@@ -59,8 +61,10 @@ def test_network_failure_uses_cache_then_bundle(bootstrap, monkeypatch, cached, 
 
     monkeypatch.setenv("FLIN_GMP_AUTO_UPDATE", "true")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "preserved")
+    monkeypatch.setenv("GOOGLE_GMP_SERVICES", "sa360")
+    monkeypatch.setenv("GOOGLE_GMP_TOKEN_DIR", "/existing/private/tokens")
     monkeypatch.setattr(bootstrap.shutil, "which", lambda _: "/bin/uv")
-    resolve = Mock(side_effect=[None, ("/cached/python", "0.9.0") if cached else None])
+    resolve = Mock(side_effect=[None, ("/cached/python", "0.1.999") if cached else None])
     monkeypatch.setattr(bootstrap, "resolve_runtime", resolve)
     execute = Mock(side_effect=SystemExit(0))
     monkeypatch.setattr(bootstrap.os, "execve", execute)
@@ -70,11 +74,16 @@ def test_network_failure_uses_cache_then_bundle(bootstrap, monkeypatch, cached, 
         with pytest.raises(SystemExit):
             bootstrap.main()
         assert execute.call_args.args[2]["GOOGLE_CLIENT_SECRET"] == "preserved"
+        assert execute.call_args.args[2]["GOOGLE_GMP_SERVICES"] == "sa360"
+        assert execute.call_args.args[2]["GOOGLE_GMP_TOKEN_DIR"] == "/existing/private/tokens"
+        assert execute.call_args.args[2]["FLIN_GMP_RUNTIME_SOURCE"] == "cache"
+        assert execute.call_args.args[2]["FLIN_GMP_UPDATE_STATUS"] == "cached_fallback"
         assert execute.call_args.args[1][1] == "-I"
         fallback.assert_not_called()
     else:
         bootstrap.main()
         fallback.assert_called_once()
+        assert bootstrap.os.environ["FLIN_GMP_UPDATE_STATUS"] == "bundled_fallback"
     assert [c.kwargs["offline"] for c in resolve.call_args_list] == [False, True]
     assert capsys.readouterr().out == ""
 
@@ -90,6 +99,7 @@ def test_disabled_updates_use_bundle_without_network(bootstrap, monkeypatch):
     bootstrap.main()
     resolve.assert_not_called()
     fallback.assert_called_once()
+    assert bootstrap.os.environ["FLIN_GMP_UPDATE_STATUS"] == "disabled"
 
 
 @pytest.mark.parametrize("setting", [None, "true", "True"])
@@ -101,7 +111,7 @@ def test_default_updates_start_pypi_runtime(bootstrap, monkeypatch, setting):
     else:
         monkeypatch.setenv("FLIN_GMP_AUTO_UPDATE", setting)
     monkeypatch.setattr(bootstrap.shutil, "which", lambda _: "/bin/uv")
-    resolve = Mock(return_value=("/updated/python", "0.9.0"))
+    resolve = Mock(return_value=("/updated/python", "0.1.999"))
     monkeypatch.setattr(bootstrap, "resolve_runtime", resolve)
     execute = Mock(side_effect=SystemExit(0))
     monkeypatch.setattr(bootstrap.os, "execve", execute)
@@ -111,4 +121,6 @@ def test_default_updates_start_pypi_runtime(bootstrap, monkeypatch, setting):
         bootstrap.main()
     resolve.assert_called_once_with("/bin/uv", offline=False)
     assert execute.call_args.args[0] == "/updated/python"
+    assert execute.call_args.args[2]["FLIN_GMP_RUNTIME_SOURCE"] == "pypi"
+    assert execute.call_args.args[2]["FLIN_GMP_UPDATE_STATUS"] == "updated"
     fallback.assert_not_called()

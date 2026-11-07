@@ -55,8 +55,8 @@ def runtime_command(uv: str, *, offline: bool) -> list[str]:
         "--prerelease",
         "disallow",
         "--from",
-        f"{PACKAGE}>={__version__},<1",
-        *(["--offline"] if offline else ["--upgrade-package", PACKAGE]),
+        f"{PACKAGE}>={__version__},<0.2",
+        *(["--offline"] if offline else ["--refresh-package", PACKAGE]),
         "python",
         "-I",
         "-c",
@@ -80,7 +80,7 @@ def resolve_runtime(uv: str, *, offline: bool) -> tuple[str, str] | None:
         )
         data = json.loads(completed.stdout)
         version, executable = data["version"], data["python"]
-        if not re.fullmatch(r"0\.\d+\.\d+", version):
+        if not re.fullmatch(r"0\.1\.\d+", version):
             return None
         if tuple(map(int, version.split("."))) < tuple(map(int, __version__.split("."))):
             return None
@@ -93,22 +93,38 @@ def resolve_runtime(uv: str, *, offline: bool) -> tuple[str, str] | None:
 
 def main() -> None:
     uv = shutil.which("uv")
-    if os.environ.get("FLIN_GMP_AUTO_UPDATE", "true").lower() == "true" and uv:
+    enabled = os.environ.get("FLIN_GMP_AUTO_UPDATE", "true").lower() == "true"
+    if enabled and uv:
         for offline in (False, True):
             runtime = resolve_runtime(uv, offline=offline)
             if runtime is None:
                 continue
             executable, version = runtime
             print(f"flin-gmp-mcp: starting PyPI runtime {version}", file=sys.stderr)
+            launch_env = dict(os.environ)
+            launch_env.update(
+                FLIN_GMP_EXTENSION_VERSION=__version__,
+                FLIN_GMP_RUNTIME_SOURCE="cache" if offline else "pypi",
+                FLIN_GMP_UPDATE_STATUS="cached_fallback" if offline else "updated",
+            )
+            if offline:
+                print("flin-gmp-mcp: update unavailable; using cached fallback", file=sys.stderr)
             try:
                 os.execve(
                     executable,
                     [executable, "-I", "-c", "from flin_gmp_mcp.server import main; main()"],
-                    dict(os.environ),
+                    launch_env,
                 )
             except OSError:
                 continue
+    os.environ.update(
+        FLIN_GMP_EXTENSION_VERSION=__version__,
+        FLIN_GMP_RUNTIME_SOURCE="bundled",
+        FLIN_GMP_UPDATE_STATUS="bundled_fallback" if enabled else "disabled",
+    )
     print(f"flin-gmp-mcp: starting bundled runtime {__version__}", file=sys.stderr)
+    if enabled:
+        print("flin-gmp-mcp: update unavailable; using bundled fallback", file=sys.stderr)
     from flin_gmp_mcp.server import main as bundled_main
 
     bundled_main()

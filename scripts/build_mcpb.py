@@ -106,7 +106,11 @@ def build_bundle(root: Path, output_dir: Path, *, tag: str | None = None) -> Pat
             if actual != expected:
                 raise RuntimeError("Packed files differ from the runtime allowlist.")
     checksum = hashlib.sha256(output.read_bytes()).hexdigest()
-    (output_dir / "SHA256SUMS").write_text(f"{checksum}  {output.name}\n", encoding="utf-8")
+    alias = output_dir / f"{manifest['name']}.mcpb"
+    shutil.copyfile(output, alias)
+    (output_dir / "SHA256SUMS").write_text(
+        f"{checksum}  {output.name}\n{checksum}  {alias.name}\n", encoding="utf-8"
+    )
     return output
 
 

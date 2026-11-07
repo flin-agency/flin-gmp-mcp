@@ -1,12 +1,13 @@
 # macOS installation (Claude Desktop)
 
-1. Download `flin-gmp-mcp-0.1.5.mcpb` from the [v0.1.5 release](https://github.com/flin-agency/flin-gmp-mcp/releases/tag/v0.1.5).
+1. Download [flin-gmp-mcp.mcpb](https://github.com/flin-agency/flin-gmp-mcp/releases/latest/download/flin-gmp-mcp.mcpb) from the latest release. Versioned packages remain available.
 2. Open the file with a current Claude Desktop version that supports uv-based
    desktop extensions. Alternatively import it from Claude's extension settings.
-3. Enter your Google Cloud **Desktop app** OAuth client ID and client secret.
+3. Enter the Google Cloud **Desktop app** OAuth client ID and client secret supplied by your administrator or password manager.
 4. Keep all four products enabled or choose a comma-separated subset of
    `admin,dv360,cm360,sa360`. Enable those APIs and grant product access in Google.
-5. Run `health_check`, then `authenticate`, and complete sign-in in your browser.
+5. Run `connection_status`, then `authenticate`, and complete sign-in in your browser.
+6. Test the enabled product using the small discovery read listed in the README.
 
 The bundle supports macOS and uses Python 3.12 through uv. It includes the reviewed server
 source and dependency lockfile; the first launch needs internet access to obtain
@@ -21,21 +22,20 @@ extension import flow. See the main README for OAuth setup and token storage.
 
 ```bash
 uv sync --locked --extra dev
-uv run python scripts/build_mcpb.py --tag v0.1.5
-uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.5.mcpb
+uv run python scripts/build_mcpb.py --tag v0.1.6
+uv run python scripts/check_mcpb.py dist/mcpb/flin-gmp-mcp-0.1.6.mcpb
 ```
 
 The builder validates the manifest against the official MCPB v0.4 schema, includes only
 allowlisted runtime files, rejects symlinks, checks version consistency and
 creates a checksum. The smoke test starts the actual extracted bundle, discovers
-all 32 tools and verifies the offline health check over MCP stdio.
+all 33 tools and verifies the offline health check over MCP stdio.
 
 ## Server updates
 
-**Automatic server updates** are enabled by default in version 0.1.5. At each
-connector start, the launcher resolves the latest stable `flin-gmp-mcp` release in
-`>= bundled version, <1` from PyPI using an explicit package upgrade and cache
-refresh. Restart Claude Desktop or the connector to load a new server; compatible
+**Automatic server updates** have been enabled by default since 0.1.5. At each
+connector start, the new 0.1.6 launcher resolves the latest stable 0.1.x `flin-gmp-mcp` release in
+`>= bundled version, <0.2` from PyPI using a package-cache refresh. Restart Claude Desktop or the connector to load a new server; compatible
 server updates do not require reinstalling the extension.
 
 If 0.1.4 is already installed, enable **Automatic server updates** once in the
@@ -60,9 +60,29 @@ while Claude is closed. `health_check.version` always reports the running versio
 even before Google credentials are configured. The displayed extension version
 identifies the installed launcher, not necessarily the server it currently runs.
 
-You can explicitly disable automatic updates to pin the bundled server. Major
-version 1.x and changes to the launcher, manifest or permissions can still require
-a new bundle; server updates within the supported 0.x line do not.
+You can explicitly disable automatic updates to pin the bundled server.
+The 0.1.6 starter accepts only stable 0.1.x versions at or above its bundled version.
+This boundary preserves Python 3.12, `flin_gmp_mcp.server.main`, stdio, the current
+OAuth environment variables/scopes, private JSON token layout and existing tool
+interfaces. Tests reject downgrades, pre-releases and 0.2/1.x versions. Future minor
+or major interfaces must be assessed and may need a new starter. Older 0.1.4/0.1.5
+starters retain their historical `<1` bound; importing the new bundle once applies
+the narrower bound and the new fallback diagnostics.
+
+With the new starter, `connection_status` and `health_check` report:
+
+| Field | Meaning |
+| --- | --- |
+| `server_version` | Server code actually running; `health_check.version` remains |
+| `extension_version` | Installed starter version, independent of PyPI updates |
+| `runtime_source` | `pypi`, `cache`, `bundled`, or `unknown` for old/direct launchers |
+| `update_status` | `updated`, `cached_fallback`, `bundled_fallback`, `disabled`, or `unknown` |
+| `fallback_active` | `true` for a cache/bundled fallback, `false` otherwise, `null` if unknown |
+
+A cached fallback may happen to contain the current server; it still means the
+online update attempt failed. Startup diagnostics go to stderr. Old starters lack
+these markers: their running server version is still known, but fallback provenance
+is explicitly unknown. A server update alone cannot replace an installed starter.
 
 ## Existing token permissions
 
